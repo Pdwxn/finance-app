@@ -1,0 +1,13 @@
+{
+  "id": "0002_views",
+  "prevId": "0001_giant_ser_duncan",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {},
+  "schemas": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  }
+}
