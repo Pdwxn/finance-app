@@ -27,5 +27,7 @@
     "node": ">=24.0.0",
     "npm": ">=11.0.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "zustand": "^5.0.14"
+  }
 }
