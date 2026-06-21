@@ -18,7 +18,7 @@ export function formatCLP(cents: number): string {
 }
 
 export function formatDate(date: string): string {
-  const [year, month, day] = date.split('-').map(Number);
+  const [year = 0, month = 0, day = 0] = date.split('-').map(Number);
   const d = new Date(year, month - 1, day);
   return new Intl.DateTimeFormat('es-CL', {
     day: 'numeric',
