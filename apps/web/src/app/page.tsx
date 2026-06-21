@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo } from 'react';
+import { Skeleton } from '@/components/Skeleton';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { useAccountsStore } from '@/store/accounts';
 import { useExpensesStore } from '@/store/expenses';
@@ -75,7 +76,7 @@ export default function Home() {
         {isLoading ? (
           <div className="space-y-4">
             {[1, 2, 3, 4].map(i => (
-              <div key={i} className="h-28 rounded-2xl bg-[var(--color-surface)] animate-pulse" />
+              <Skeleton key={i} className="h-28 w-full rounded-2xl" />
             ))}
           </div>
         ) : (

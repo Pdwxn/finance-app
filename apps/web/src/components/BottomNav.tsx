@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { HomeIcon, CreditCardIcon, ArrowsRightLeftIcon, EllipsisHorizontalIcon } from '@heroicons/react/24/outline';
 
 const navItems = [
-  { label: 'Dashboard', href: '/', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-  { label: 'Accounts', href: '/accounts', icon: 'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z' },
-  { label: 'Transactions', href: '/transactions', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
-  { label: 'More', href: '/more', icon: 'M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z' },
+  { label: 'Dashboard', href: '/', icon: HomeIcon },
+  { label: 'Accounts', href: '/accounts', icon: CreditCardIcon },
+  { label: 'Transactions', href: '/transactions', icon: ArrowsRightLeftIcon },
+  { label: 'More', href: '/more', icon: EllipsisHorizontalIcon },
 ];
 
 export function BottomNav() {
@@ -25,9 +26,7 @@ export function BottomNav() {
               isActive ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-primary)]'
             }`}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d={item.icon} />
-            </svg>
+            <item.icon className="w-5 h-5" />
             <span className="text-[10px]">{item.label}</span>
           </Link>
         );

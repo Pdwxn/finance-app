@@ -2,13 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { PlusIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Sheet } from '@/components/Sheet';
+import { Skeleton } from '@/components/Skeleton';
+import { EmptyState } from '@/components/EmptyState';
+import { SwipeDeleteAction } from '@/hooks/useSwipeToDelete';
 import { useDebtsStore } from '@/store/debts';
 import { formatCLP } from '@finance-app/utils';
 
 export default function DebtsPage() {
-  const { debts, isLoading, fetchDebts, createDebt } = useDebtsStore();
+  const { debts, isLoading, fetchDebts, createDebt, deleteDebt } = useDebtsStore();
   const [createOpen, setCreateOpen] = useState(false);
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
@@ -45,36 +49,31 @@ export default function DebtsPage() {
           <h2 className="text-xl font-semibold text-[var(--color-text)]">Deudas</h2>
           <button onClick={() => setCreateOpen(true)}
             className="flex items-center justify-center w-10 h-10 rounded-lg text-[var(--color-primary)] hover:bg-[var(--color-surface-alt)] transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
+            <PlusIcon className="w-5 h-5" />
           </button>
         </div>
 
         {isLoading ? (
-          <div className="space-y-3">{[1, 2].map(i => <div key={i} className="h-24 rounded-xl bg-[var(--color-surface)] animate-pulse" />)}</div>
+          <Skeleton className="h-24 w-full" count={2} />
         ) : debts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center pt-16 text-center">
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-[var(--color-text-secondary)] mb-4">
-              <path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <p className="text-[var(--color-text-secondary)] font-medium">Sin deudas</p>
-            <p className="text-sm text-[var(--color-text-secondary)] mt-1">Agrega tu primera deuda</p>
-          </div>
+          <EmptyState icon={ExclamationTriangleIcon} title="Sin deudas" subtitle="Agrega tu primera deuda" />
         ) : (
           <div className="flex flex-col gap-3">
             {debts.map(debt => (
-              <Link key={debt.id} href={`/debts/${debt.id}`}
-                className="rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] p-4 hover:bg-[var(--color-surface-alt)] transition-colors">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-[var(--color-text)]">{debt.name}</span>
-                  <span className="text-base font-semibold text-rose-500">{formatCLP(debt.initialAmount)}</span>
-                </div>
-                <div className="flex gap-3 mt-2 text-xs text-[var(--color-text-secondary)]">
-                  <span>Tasa: {debt.interestRate}%</span>
-                  <span>Desde: {debt.startDate}</span>
-                </div>
-              </Link>
+              <div key={debt.id} data-swipe-id={debt.id} className="relative overflow-hidden">
+                <SwipeDeleteAction onDelete={() => deleteDebt(debt.id)} />
+                <Link key={debt.id} href={`/debts/${debt.id}`}
+                  className="relative z-10 block rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] p-4 hover:bg-[var(--color-surface-alt)] transition-colors">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-[var(--color-text)]">{debt.name}</span>
+                    <span className="text-base font-semibold text-rose-500">{formatCLP(debt.initialAmount)}</span>
+                  </div>
+                  <div className="flex gap-3 mt-2 text-xs text-[var(--color-text-secondary)]">
+                    <span>Tasa: {debt.interestRate}%</span>
+                    <span>Desde: {debt.startDate}</span>
+                  </div>
+                </Link>
+              </div>
             ))}
           </div>
         )}

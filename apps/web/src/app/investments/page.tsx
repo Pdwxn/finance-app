@@ -2,13 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { PlusIcon, ArrowTrendingUpIcon } from '@heroicons/react/24/outline';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Sheet } from '@/components/Sheet';
+import { Skeleton } from '@/components/Skeleton';
+import { EmptyState } from '@/components/EmptyState';
+import { SwipeDeleteAction } from '@/hooks/useSwipeToDelete';
 import { useInvestmentsStore } from '@/store/investments';
 import { formatCLP } from '@finance-app/utils';
 
 export default function InvestmentsPage() {
-  const { investments, isLoading, fetchInvestments, createInvestment } = useInvestmentsStore();
+  const { investments, isLoading, fetchInvestments, createInvestment, deleteInvestment } = useInvestmentsStore();
   const [createOpen, setCreateOpen] = useState(false);
   const [symbol, setSymbol] = useState('');
   const [name, setName] = useState('');
@@ -46,41 +50,36 @@ export default function InvestmentsPage() {
           <h2 className="text-xl font-semibold text-[var(--color-text)]">Inversiones</h2>
           <button onClick={() => setCreateOpen(true)}
             className="flex items-center justify-center w-10 h-10 rounded-lg text-[var(--color-primary)] hover:bg-[var(--color-surface-alt)] transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
+            <PlusIcon className="w-5 h-5" />
           </button>
         </div>
 
         {isLoading ? (
-          <div className="space-y-3">{[1, 2].map(i => <div key={i} className="h-24 rounded-xl bg-[var(--color-surface)] animate-pulse" />)}</div>
+          <Skeleton className="h-24 w-full" count={2} />
         ) : investments.length === 0 ? (
-          <div className="flex flex-col items-center justify-center pt-16 text-center">
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-[var(--color-text-secondary)] mb-4">
-              <path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-            </svg>
-            <p className="text-[var(--color-text-secondary)] font-medium">Sin inversiones</p>
-            <p className="text-sm text-[var(--color-text-secondary)] mt-1">Agrega tu primera inversión</p>
-          </div>
+          <EmptyState icon={ArrowTrendingUpIcon} title="Sin inversiones" subtitle="Agrega tu primera inversión" />
         ) : (
           <div className="flex flex-col gap-3">
             {investments.map(inv => {
               const totalCost = Math.round(inv.averageCost * inv.quantity);
               return (
-                <Link key={inv.id} href={`/investments/${inv.id}`}
-                  className="rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] p-4 hover:bg-[var(--color-surface-alt)] transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="font-medium text-[var(--color-text)]">{inv.name}</span>
-                      <span className="ml-2 text-xs font-mono text-[var(--color-text-secondary)]">{inv.symbol}</span>
+                <div key={inv.id} data-swipe-id={inv.id} className="relative overflow-hidden">
+                  <SwipeDeleteAction onDelete={() => deleteInvestment(inv.id)} />
+                  <Link key={inv.id} href={`/investments/${inv.id}`}
+                    className="relative z-10 block rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] p-4 hover:bg-[var(--color-surface-alt)] transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="font-medium text-[var(--color-text)]">{inv.name}</span>
+                        <span className="ml-2 text-xs font-mono text-[var(--color-text-secondary)]">{inv.symbol}</span>
+                      </div>
+                      <span className="text-base font-semibold text-emerald-500">{formatCLP(totalCost)}</span>
                     </div>
-                    <span className="text-base font-semibold text-emerald-500">{formatCLP(totalCost)}</span>
-                  </div>
-                  <div className="flex gap-3 mt-2 text-xs text-[var(--color-text-secondary)]">
-                    <span>{inv.quantity} acc.</span>
-                    <span>Costo prom.: {formatCLP(inv.averageCost)}</span>
-                  </div>
-                </Link>
+                    <div className="flex gap-3 mt-2 text-xs text-[var(--color-text-secondary)]">
+                      <span>{inv.quantity} acc.</span>
+                      <span>Costo prom.: {formatCLP(inv.averageCost)}</span>
+                    </div>
+                  </Link>
+                </div>
               );
             })}
           </div>

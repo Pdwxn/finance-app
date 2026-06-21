@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { ChevronLeftIcon } from '@heroicons/react/24/outline';
+import { Skeleton } from '@/components/Skeleton';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Sheet } from '@/components/Sheet';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
@@ -81,6 +83,7 @@ export default function GoalDetailPage() {
       <ProtectedRoute>
         <div className="p-4">
           <p className="text-[var(--color-text-secondary)]">Cargando…</p>
+          <Skeleton className="h-40 w-full mt-4" />
         </div>
       </ProtectedRoute>
     );
@@ -93,9 +96,7 @@ export default function GoalDetailPage() {
       <div className="p-4">
         <div className="flex items-center gap-3 mb-4">
           <button onClick={() => router.back()} className="flex items-center justify-center w-10 h-10 rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-alt)] transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
+            <ChevronLeftIcon className="w-5 h-5" />
           </button>
           <h2 className="text-xl font-semibold text-[var(--color-text)]">{goal.name}</h2>
         </div>

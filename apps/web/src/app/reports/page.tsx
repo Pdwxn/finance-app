@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { Skeleton } from '@/components/Skeleton';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { useExpensesStore } from '@/store/expenses';
 import { useIncomesStore } from '@/store/incomes';
@@ -119,7 +120,7 @@ export default function ReportsPage() {
     return (
       <ProtectedRoute>
         <div className="p-4 space-y-4">
-          {[1, 2, 3].map(i => <div key={i} className="h-64 rounded-xl bg-[var(--color-surface)] animate-pulse" />)}
+          {[1, 2, 3].map(i => <Skeleton key={i} className="h-64 w-full" />)}
         </div>
       </ProtectedRoute>
     );
