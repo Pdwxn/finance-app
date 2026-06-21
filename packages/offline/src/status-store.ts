@@ -3,10 +3,12 @@ export type OnlineStatus = 'online' | 'offline' | 'syncing';
 type StatusListener = (status: OnlineStatus) => void;
 
 class StatusStore {
-  private _status: OnlineStatus = navigator.onLine ? 'online' : 'offline';
+  private _status: OnlineStatus = 'online';
   private listeners: Set<StatusListener> = new Set();
 
   constructor() {
+    if (typeof window === 'undefined') return;
+    this._status = navigator.onLine ? 'online' : 'offline';
     window.addEventListener('online', () => this.setStatus('online'));
     window.addEventListener('offline', () => this.setStatus('offline'));
   }

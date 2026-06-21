@@ -7,6 +7,7 @@ import { Toaster } from 'sonner';
 import { TopBar } from './TopBar';
 import { BottomNav } from './BottomNav';
 import { SyncStatusIndicator } from './SyncStatusIndicator';
+import { PwaRegister } from './PwaRegister';
 
 const authPaths = new Set(['/login', '/register']);
 
@@ -24,6 +25,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
+      <PwaRegister />
       <TopBar />
       <SyncStatusIndicator />
       <main className="pt-14 pb-16 min-h-screen">{children}</main>
