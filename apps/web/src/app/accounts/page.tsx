@@ -1,9 +1,13 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ProtectedRoute } from '../../components/ProtectedRoute';
+import { Sheet } from '../../components/Sheet';
+import { AccountForm } from '../../components/AccountForm';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { useAccountsStore } from '../../store/accounts';
 import { formatCLP } from '@finance-app/utils';
+import type { Account } from '@finance-app/types';
 
 const typeLabels: Record<string, string> = {
   cash: 'Efectivo',
@@ -22,18 +26,50 @@ const typeColors: Record<string, string> = {
 };
 
 export default function AccountsPage() {
-  const { accounts, isLoading, error, fetchAccounts } = useAccountsStore();
+  const { accounts, isLoading, error, fetchAccounts, createAccount, updateAccount, deleteAccount } = useAccountsStore();
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<Account | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Account | null>(null);
+  const [formLoading, setFormLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     fetchAccounts();
   }, [fetchAccounts]);
+
+  const handleCreate = async (data: Parameters<typeof createAccount>[0]) => {
+    setFormLoading(true);
+    await createAccount(data);
+    setFormLoading(false);
+    setCreateOpen(false);
+  };
+
+  const handleUpdate = async (data: Parameters<typeof createAccount>[0]) => {
+    if (!editTarget) return;
+    setFormLoading(true);
+    await updateAccount(editTarget.id, data);
+    setFormLoading(false);
+    setEditTarget(null);
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
+    await deleteAccount(deleteTarget.id);
+    setDeleteLoading(false);
+    setDeleteTarget(null);
+  };
 
   return (
     <ProtectedRoute>
       <div className="p-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-[var(--color-text)]">Cuentas</h2>
-          <button className="flex items-center justify-center w-10 h-10 rounded-lg text-[var(--color-primary)] hover:bg-[var(--color-surface-alt)] transition-colors">
+          <button
+            onClick={() => setCreateOpen(true)}
+            className="flex items-center justify-center w-10 h-10 rounded-lg text-[var(--color-primary)] hover:bg-[var(--color-surface-alt)] transition-colors"
+            aria-label="Crear cuenta"
+          >
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
@@ -62,9 +98,10 @@ export default function AccountsPage() {
         ) : (
           <div className="flex flex-col gap-3">
             {accounts.map(account => (
-              <div
+              <button
                 key={account.id}
-                className="flex items-center justify-between rounded-xl bg-[var(--color-surface)] p-4 border border-[var(--color-border)]"
+                onClick={() => setEditTarget(account)}
+                className="flex items-center justify-between rounded-xl bg-[var(--color-surface)] p-4 border border-[var(--color-border)] text-left w-full hover:bg-[var(--color-surface-alt)] transition-colors"
               >
                 <div className="flex flex-col gap-1.5">
                   <span className="font-medium text-[var(--color-text)]">{account.name}</span>
@@ -78,11 +115,52 @@ export default function AccountsPage() {
                 <span className="text-base font-semibold text-[var(--color-text)]">
                   {formatCLP(account.initialBalance)}
                 </span>
-              </div>
+              </button>
             ))}
           </div>
         )}
       </div>
+
+      <Sheet open={createOpen} onClose={() => setCreateOpen(false)} title="Nueva cuenta">
+        <AccountForm
+          onSubmit={handleCreate}
+          onCancel={() => setCreateOpen(false)}
+          isLoading={formLoading}
+        />
+      </Sheet>
+
+      <Sheet open={!!editTarget} onClose={() => setEditTarget(null)} title="Editar cuenta">
+        {editTarget && (
+          <div className="flex flex-col gap-4">
+            <AccountForm
+              initial={editTarget}
+              onSubmit={handleUpdate}
+              onCancel={() => setEditTarget(null)}
+              isLoading={formLoading}
+            />
+            <button
+              onClick={() => {
+                setDeleteTarget(editTarget);
+                setEditTarget(null);
+              }}
+              className="w-full h-11 rounded-lg border border-[var(--color-danger)] text-[var(--color-danger)] font-medium hover:bg-[var(--color-danger)] hover:text-white transition-colors"
+            >
+              Eliminar cuenta
+            </button>
+          </div>
+        )}
+      </Sheet>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Eliminar cuenta"
+        message={`¿Estás seguro de eliminar "${deleteTarget?.name}"? Esta acción no se puede deshacer.`}
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+        isLoading={deleteLoading}
+      />
     </ProtectedRoute>
   );
 }
