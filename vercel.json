@@ -1,6 +1,6 @@
 {
-  "rootDirectory": ".",
   "buildCommand": "npx turbo build --filter=@finance-app/web",
   "outputDirectory": "apps/web/.next",
   "installCommand": "npm install"
 }
+
