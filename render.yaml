@@ -3,7 +3,7 @@ services:
     name: finance-app-api
     runtime: node
     buildCommand: npm install && npm run build
-    startCommand: cd apps/api && node dist/index.js
+    startCommand: cd apps/api && npm run db:migrate && node dist/index.js
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
