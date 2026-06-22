@@ -22,6 +22,9 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
+  // Only intercept same-origin requests (ignore cross-origin like Render API)
+  if (url.origin !== self.location.origin) return;
+
   // API requests: network first, fallback to cache
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(networkFirst(request, API_CACHE));
