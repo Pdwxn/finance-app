@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import { env } from './config/env';
 import authRouter from './modules/auth/auth.router';
 import accountsRouter from './modules/accounts/accounts.router';
@@ -19,6 +20,7 @@ import syncRouter from './modules/sync/sync.router';
 
 const app = express();
 
+app.use(cors({ origin: env.CORS_ORIGIN }));
 app.use(express.json());
 
 app.get('/health', (_req, res) => {
