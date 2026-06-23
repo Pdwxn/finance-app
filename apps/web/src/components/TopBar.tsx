@@ -17,7 +17,7 @@ export function TopBar() {
       </div>
       <button
         onClick={toggle}
-        className="flex items-center justify-center w-10 h-10 rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-alt)] transition-colors"
+        className="flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-alt)] transition-colors"
         aria-label="Toggle theme"
       >
         {theme === 'light' ? <MoonIcon className="w-5 h-5" /> : <SunIcon className="w-5 h-5" />}
