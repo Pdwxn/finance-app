@@ -4,7 +4,7 @@ import { ThemeProvider } from '../components/ThemeProvider';
 import { AppShell } from '../components/AppShell';
 
 export const metadata: Metadata = {
-  title: 'Finance App',
+  title: 'Numa',
   description: 'Personal finance manager',
 };
 

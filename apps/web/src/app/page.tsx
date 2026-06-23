@@ -179,7 +179,7 @@ export default function Home() {
           <div className="w-16 h-16 rounded-full bg-[var(--color-surface-alt)] flex items-center justify-center text-[var(--color-text-secondary)] mb-4 border border-[var(--color-border)]">
             <FolderOpenIcon className="w-8 h-8" strokeWidth={1.5} />
           </div>
-          <h2 className="text-xl font-bold text-[var(--color-text)] mb-2">¡Bienvenido a Finance App!</h2>
+          <h2 className="text-xl font-bold text-[var(--color-text)] mb-2">¡Bienvenido a Numa!</h2>
           <p className="text-sm text-[var(--color-text-secondary)] max-w-sm mb-6">
             Para comenzar a ver el resumen de tus finanzas y registrar tus movimientos, primero debes crear una cuenta.
           </p>

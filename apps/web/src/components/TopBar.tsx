@@ -11,7 +11,7 @@ export function TopBar() {
       <div className="flex items-center h-7 select-none">
         <img
           src={theme === 'dark' ? '/brand/hor-logo-dark.svg' : '/brand/hor-logo-light.svg'}
-          alt="Finance App"
+          alt="Numa"
           className="h-full w-auto object-contain"
         />
       </div>

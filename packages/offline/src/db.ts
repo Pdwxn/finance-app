@@ -213,7 +213,7 @@ class FinanceDB extends Dexie {
   syncQueue!: EntityTable<SyncQueueItem, 'id'>;
 
   constructor() {
-    super('finance-app');
+    super('numa');
 
     this.version(1).stores({
       accounts: '&id, userId, [userId+createdAt]',

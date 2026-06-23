@@ -1,8 +1,8 @@
 {
-  "name": "finance-app-monorepo",
+  "name": "numa-monorepo",
   "private": true,
   "version": "1.0.0",
-  "description": "Finance App Monorepo",
+  "description": "Numa Monorepo",
   "packageManager": "npm@11.13.0",
   "workspaces": [
     "apps/*",

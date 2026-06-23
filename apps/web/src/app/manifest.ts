@@ -2,8 +2,8 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Finance App',
-    short_name: 'Finance',
+    name: 'Numa',
+    short_name: 'Numa',
     description: 'Personal finance manager - offline first',
     start_url: '/',
     display: 'standalone',
