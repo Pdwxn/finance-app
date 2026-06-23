@@ -1,35 +1,94 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
+import Link from 'next/link';
+import { 
+  ChevronLeftIcon, 
+  ChevronRightIcon, 
+  ArrowDownLeftIcon, 
+  ArrowUpRightIcon, 
+  FolderOpenIcon, 
+  PlusIcon 
+} from '@heroicons/react/24/outline';
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+
 import { Skeleton } from '@/components/Skeleton';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { Sheet } from '@/components/Sheet';
 import { useAccountsStore } from '@/store/accounts';
 import { useExpensesStore } from '@/store/expenses';
 import { useIncomesStore } from '@/store/incomes';
 import { useCategoriesStore } from '@/store/categories';
 import { formatCLP } from '@finance-app/utils';
+import type { Category } from '@finance-app/types';
 
-function currentMonthRange(): [string, string] {
-  const now = new Date();
-  const start = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
-  const end = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-31`;
-  return [start, end];
+interface DashboardTransaction {
+  id: string;
+  type: 'expense' | 'income';
+  amount: number;
+  description: string;
+  date: string;
+  category?: Category;
+}
+
+function getCategoryEmoji(categoryName: string = ''): string {
+  const name = categoryName.toLowerCase();
+  if (name.includes('comida') || name.includes('food') || name.includes('restaurante')) return '🍔';
+  if (name.includes('café') || name.includes('cafe') || name.includes('coffee') || name.includes('dunkin')) return '☕';
+  if (name.includes('supermercado') || name.includes('grocery') || name.includes('aldi') || name.includes('lider') || name.includes('compras')) return '🛒';
+  if (name.includes('transporte') || name.includes('uber') || name.includes('bencina')) return '🚗';
+  if (name.includes('entretenimiento') || name.includes('cine') || name.includes('netflix') || name.includes('ocio')) return '🍿';
+  if (name.includes('servicios') || name.includes('luz') || name.includes('agua') || name.includes('gas') || name.includes('cuentas')) return '⚡';
+  if (name.includes('salud') || name.includes('farmacia') || name.includes('médico') || name.includes('doctor')) return '💊';
+  if (name.includes('shopping') || name.includes('ropa') || name.includes('tienda')) return '🛍️';
+  return '💸';
+}
+
+function formatDateSpanish(dateStr: string): string {
+  const d = new Date(dateStr + 'T12:00:00'); // Evita desfases de zona horaria
+  return d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+}
+
+function formatDisplayDate(dateStr: string): string {
+  const formatted = formatDateSpanish(dateStr);
+  return formatted.charAt(0).toUpperCase() + formatted.slice(1);
 }
 
 export default function Home() {
-  const { accounts, fetchAccounts } = useAccountsStore();
-  const { expenses, fetchExpenses } = useExpensesStore();
-  const { incomes, fetchIncomes } = useIncomesStore();
-  const { categories, fetchCategories } = useCategoriesStore();
+  const { accounts, isLoading: accountsLoading, fetchAccounts } = useAccountsStore();
+  const { expenses, isLoading: expensesLoading, fetchExpenses } = useExpensesStore();
+  const { incomes, isLoading: incomesLoading, fetchIncomes } = useIncomesStore();
+  const { categories, isLoading: categoriesLoading, fetchCategories } = useCategoriesStore();
+
+  const [selectedDate, setSelectedDate] = useState(() => new Date());
+  const [selectedTx, setSelectedTx] = useState<DashboardTransaction | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     fetchAccounts();
     fetchExpenses();
     fetchIncomes();
     fetchCategories();
   }, [fetchAccounts, fetchExpenses, fetchIncomes, fetchCategories]);
 
-  const [monthStart, monthEnd] = useMemo(currentMonthRange, []);
+  const { monthStart, monthEnd, monthLabel } = useMemo(() => {
+    const year = selectedDate.getFullYear();
+    const month = selectedDate.getMonth();
+    const start = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    const end = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+    const monthLabel = selectedDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+    return { monthStart: start, monthEnd: end, monthLabel };
+  }, [selectedDate]);
+
+  const handlePrevMonth = () => {
+    setSelectedDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+  };
+
+  const handleNextMonth = () => {
+    setSelectedDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+  };
 
   const netWorth = useMemo(() => {
     const initialSum = accounts.reduce((sum, a) => sum + a.initialBalance, 0);
@@ -62,150 +121,295 @@ export default function Home() {
         total,
         category: categories.find(c => c.id === categoryId),
       }))
-      .sort((a, b) => b.total - a.total)
-      .slice(0, 5);
+      .sort((a, b) => b.total - a.total);
   }, [expenses, categories, monthStart, monthEnd]);
 
-  const isLoading = accounts.length === 0;
+  const recentTransactions = useMemo(() => {
+    const monthExpenses = expenses
+      .filter(e => e.transactionDate >= monthStart && e.transactionDate <= monthEnd)
+      .map(e => ({
+        id: e.id,
+        type: 'expense' as const,
+        amount: e.amount,
+        description: e.description,
+        date: e.transactionDate,
+        category: categories.find(c => c.id === e.categoryId),
+      }));
 
-  return (
-    <ProtectedRoute>
-      <div className="p-4 space-y-4">
-        <h2 className="text-xl font-semibold text-[var(--color-text)]">Dashboard</h2>
+    const monthIncomes = incomes
+      .filter(i => i.transactionDate >= monthStart && i.transactionDate <= monthEnd)
+      .map(i => ({
+        id: i.id,
+        type: 'income' as const,
+        amount: i.amount,
+        description: i.description,
+        date: i.transactionDate,
+        category: undefined,
+      }));
 
-        {isLoading ? (
+    return [...monthExpenses, ...monthIncomes]
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .slice(0, 5);
+  }, [expenses, incomes, categories, monthStart, monthEnd]);
+
+  const isStoreLoading = accountsLoading || expensesLoading || incomesLoading || categoriesLoading;
+
+  if (!mounted || isStoreLoading) {
+    return (
+      <ProtectedRoute>
+        <div className="p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-[var(--color-text)]">Resumen</h2>
+            <Skeleton className="h-8 w-32 rounded-lg" />
+          </div>
           <div className="space-y-4">
             {[1, 2, 3, 4].map(i => (
               <Skeleton key={i} className="h-28 w-full rounded-2xl" />
             ))}
           </div>
-        ) : (
-          <>
-            <div className="rounded-2xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-dark)] p-5 text-white">
-              <p className="text-sm font-medium opacity-80">Patrimonio neto</p>
-              <p className="text-3xl font-bold mt-1">{formatCLP(netWorth)}</p>
-              <div className="flex gap-4 mt-3 text-sm">
-                <div>
-                  <span className="opacity-80">Ingresos</span>
-                  <p className="font-semibold">{formatCLP(monthlyIncome)}</p>
-                </div>
-                <div>
-                  <span className="opacity-80">Gastos</span>
-                  <p className="font-semibold">{formatCLP(monthlyExpense)}</p>
-                </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
+  if (accounts.length === 0) {
+    return (
+      <ProtectedRoute>
+        <div className="p-6 flex flex-col items-center justify-center min-h-[70vh] text-center">
+          <div className="w-16 h-16 rounded-full bg-[var(--color-surface-alt)] flex items-center justify-center text-[var(--color-text-secondary)] mb-4 border border-[var(--color-border)]">
+            <FolderOpenIcon className="w-8 h-8" strokeWidth={1.5} />
+          </div>
+          <h2 className="text-xl font-bold text-[var(--color-text)] mb-2">¡Bienvenido a Finance App!</h2>
+          <p className="text-sm text-[var(--color-text-secondary)] max-w-sm mb-6">
+            Para comenzar a ver el resumen de tus finanzas y registrar tus movimientos, primero debes crear una cuenta.
+          </p>
+          <Link href="/accounts" className="flex items-center gap-2 px-5 h-11 bg-[var(--color-primary)] text-white font-medium rounded-xl hover:bg-[var(--color-primary-dark)] transition-colors shadow-sm">
+            <PlusIcon className="w-4 h-4" />
+            Crear mi primera cuenta
+          </Link>
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
+  // Prepara los datos del gráfico circular
+  const chartData = topCategories.map(tc => ({
+    name: tc.category?.name ?? 'Sin categoría',
+    value: tc.total,
+    color: tc.category?.color ?? 'var(--color-primary)',
+  }));
+
+  // Si no hay datos de categorías, mostramos un gráfico de "sin gastos"
+  const hasExpenses = chartData.length > 0;
+  const pieData = hasExpenses ? chartData : [{ name: 'Sin gastos', value: 1, color: 'var(--color-border)' }];
+
+  return (
+    <ProtectedRoute>
+      <div className="p-4 space-y-5 pb-10">
+        
+        {/* Header con filtro de fecha */}
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold text-[var(--color-text)]">Resumen</h2>
+          <div className="flex items-center gap-1 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] p-1 shadow-sm">
+            <button onClick={handlePrevMonth} className="p-1 hover:bg-[var(--color-surface-alt)] rounded-lg transition-colors text-[var(--color-text-secondary)]">
+              <ChevronLeftIcon className="w-4 h-4" />
+            </button>
+            <span className="text-xs font-bold text-[var(--color-text)] px-1 capitalize min-w-[100px] text-center">
+              {monthLabel}
+            </span>
+            <button onClick={handleNextMonth} className="p-1 hover:bg-[var(--color-surface-alt)] rounded-lg transition-colors text-[var(--color-text-secondary)]">
+              <ChevronRightIcon className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Patrimonio Neto */}
+        <div className="rounded-3xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-purple-700 p-6 text-white shadow-lg shadow-indigo-500/10">
+          <p className="text-xs font-semibold uppercase tracking-wider opacity-75">Patrimonio neto total</p>
+          <p className="text-3xl font-extrabold mt-1 tracking-tight">{formatCLP(netWorth)}</p>
+        </div>
+
+        {/* Ingresos & Gastos Grid */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] p-4 flex flex-col justify-between shadow-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-[var(--color-text-secondary)]">Ingresos</span>
+              <div className="w-7 h-7 rounded-full bg-emerald-50 dark:bg-emerald-950/20 flex items-center justify-center text-emerald-500">
+                <ArrowDownLeftIcon className="w-4 h-4" />
               </div>
             </div>
+            <div className="mt-4">
+              <p className="text-lg font-bold text-emerald-500 tracking-tight">{formatCLP(monthlyIncome)}</p>
+            </div>
+          </div>
 
-            <div className="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-[var(--color-text)]">Flujo de caja</h3>
-                <span className="text-[11px] text-[var(--color-text-secondary)]">Este mes</span>
-              </div>
-              <div className="flex items-end gap-3">
-                <div className="flex-1">
-                  <div className="flex justify-between text-xs text-[var(--color-text-secondary)] mb-1">
-                    <span>Ingresos</span>
-                    <span className="text-emerald-500 font-medium">{formatCLP(monthlyIncome)}</span>
-                  </div>
-                  <div className="h-2 rounded-full bg-[var(--color-surface-alt)] overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-emerald-500 transition-all"
-                      style={{ width: `${Math.min(100, (monthlyIncome / (monthlyIncome || monthlyExpense || 1)) * 100)}%` }}
-                    />
-                  </div>
-                </div>
-                <div className="flex-1">
-                  <div className="flex justify-between text-xs text-[var(--color-text-secondary)] mb-1">
-                    <span>Gastos</span>
-                    <span className="text-rose-500 font-medium">{formatCLP(monthlyExpense)}</span>
-                  </div>
-                  <div className="h-2 rounded-full bg-[var(--color-surface-alt)] overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-rose-500 transition-all"
-                      style={{ width: `${Math.min(100, (monthlyExpense / (monthlyIncome || monthlyExpense || 1)) * 100)}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-              <div className="mt-3 pt-3 border-t border-[var(--color-border)]">
-                <div className="flex justify-between text-sm">
-                  <span className="text-[var(--color-text-secondary)]">Saldo del mes</span>
-                  <span className={`font-semibold ${monthlyIncome - monthlyExpense >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                    {formatCLP(monthlyIncome - monthlyExpense)}
-                  </span>
-                </div>
+          <div className="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] p-4 flex flex-col justify-between shadow-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-[var(--color-text-secondary)]">Gastos</span>
+              <div className="w-7 h-7 rounded-full bg-rose-50 dark:bg-rose-950/20 flex items-center justify-center text-rose-500">
+                <ArrowUpRightIcon className="w-4 h-4" />
               </div>
             </div>
-
-            <div className="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-[var(--color-text)]">Presupuesto</h3>
-                <span className="text-[11px] text-[var(--color-text-secondary)]">Este mes</span>
-              </div>
-              <div className="flex items-end gap-2 mb-2">
-                <span className="text-2xl font-bold text-[var(--color-text)]">{formatCLP(monthlyExpense)}</span>
-                <span className="text-sm text-[var(--color-text-secondary)] mb-1">gastados</span>
-              </div>
-              {monthlyIncome > 0 && (
-                <div>
-                  <div className="h-2 rounded-full bg-[var(--color-surface-alt)] overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all"
-                      style={{
-                        width: `${Math.min(100, (monthlyExpense / monthlyIncome) * 100)}%`,
-                        background: monthlyExpense > monthlyIncome
-                          ? 'var(--color-danger)'
-                          : monthlyExpense > monthlyIncome * 0.8
-                            ? 'var(--color-warning)'
-                            : 'var(--color-primary)',
-                      }}
-                    />
-                  </div>
-                  <p className="text-xs text-[var(--color-text-secondary)] mt-1">
-                    {Math.round((monthlyExpense / monthlyIncome) * 100)}% de tus ingresos
-                  </p>
-                </div>
-              )}
+            <div className="mt-4">
+              <p className="text-lg font-bold text-rose-500 tracking-tight">{formatCLP(monthlyExpense)}</p>
             </div>
+          </div>
+        </div>
 
-            <div className="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-[var(--color-text)]">Categorías principales</h3>
-                <span className="text-[11px] text-[var(--color-text-secondary)]">Este mes</span>
-              </div>
-              {topCategories.length === 0 && (
-                <p className="text-sm text-[var(--color-text-secondary)]">Sin gastos este mes</p>
-              )}
-              <div className="space-y-3">
-                {topCategories.map(({ categoryId, total, category }) => {
-                  const maxTotal = topCategories[0]?.total ?? 1;
-                  return (
-                    <div key={categoryId}>
-                      <div className="flex items-center justify-between text-sm mb-1">
-                        <span className="text-[var(--color-text)] font-medium truncate mr-2">
-                          {category?.name ?? 'Sin categoría'}
-                        </span>
-                        <span className="text-[var(--color-text-secondary)] font-medium whitespace-nowrap">
-                          {formatCLP(total)}
-                        </span>
-                      </div>
-                      <div className="h-1.5 rounded-full bg-[var(--color-surface-alt)] overflow-hidden">
-                        <div
-                          className="h-full rounded-full"
-                          style={{
-                            width: `${(total / maxTotal) * 100}%`,
-                            backgroundColor: category?.color ?? 'var(--color-primary)',
-                          }}
-                        />
-                      </div>
+        {/* Resumen de gastos - Gráfico Circular */}
+        <div className="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] p-5 shadow-sm">
+          <h3 className="text-sm font-bold text-[var(--color-text)] mb-4">Resumen de gastos</h3>
+          
+          <div className="relative h-44 w-full flex items-center justify-center">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={pieData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={55}
+                  outerRadius={75}
+                  paddingAngle={hasExpenses ? 2 : 0}
+                  dataKey="value"
+                >
+                  {pieData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+            
+            <div className="absolute flex flex-col items-center justify-center text-center">
+              <span className="text-[10px] uppercase font-bold text-[var(--color-text-secondary)] tracking-wider">Total gastado</span>
+              <span className="text-lg font-extrabold text-[var(--color-text)] mt-0.5 tracking-tight">
+                {formatCLP(monthlyExpense)}
+              </span>
+            </div>
+          </div>
+
+          {/* Listado de categorías debajo del gráfico */}
+          {hasExpenses ? (
+            <div className="mt-4 pt-4 border-t border-[var(--color-border)] space-y-2.5">
+              {topCategories.map(({ categoryId, total, category }) => {
+                const percentage = monthlyExpense > 0 ? Math.round((total / monthlyExpense) * 100) : 0;
+                return (
+                  <div key={categoryId} className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span
+                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: category?.color ?? 'var(--color-primary)' }}
+                      />
+                      <span className="text-[var(--color-text)] font-semibold truncate">
+                        {category?.name ?? 'Sin categoría'}
+                      </span>
                     </div>
-                  );
-                })}
+                    <span className="text-[var(--color-text-secondary)] font-bold whitespace-nowrap">
+                      {formatCLP(total)} <span className="opacity-75 font-medium ml-1">({percentage}%)</span>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="mt-4 pt-4 border-t border-[var(--color-border)] text-center">
+              <p className="text-xs text-[var(--color-text-secondary)] font-medium">
+                No hay gastos registrados en este período.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Últimos Movimientos */}
+        <div className="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] p-5 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold text-[var(--color-text)]">Últimos movimientos</h3>
+            <Link href="/transactions" className="text-xs font-bold text-[var(--color-primary)] hover:underline">
+              Ver todos
+            </Link>
+          </div>
+
+          {recentTransactions.length === 0 ? (
+            <p className="text-xs text-[var(--color-text-secondary)] text-center py-4 font-medium">
+              No hay movimientos en este mes.
+            </p>
+          ) : (
+            <div className="divide-y divide-[var(--color-border)]">
+              {recentTransactions.map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => setSelectedTx(item)}
+                  className="w-full flex items-center gap-3 py-3 first:pt-0 last:pb-0 text-left hover:bg-[var(--color-surface-alt)]/50 transition-colors rounded-lg px-1 -mx-1"
+                >
+                  <div className="w-10 h-10 rounded-full bg-[var(--color-surface-alt)] flex items-center justify-center text-xl shrink-0">
+                    {getCategoryEmoji(item.category?.name ?? (item.type === 'income' ? 'Ingreso' : ''))}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-[var(--color-text)] truncate">{item.description}</p>
+                    <p className="text-xs text-[var(--color-text-secondary)] mt-0.5 font-medium">
+                      {item.category?.name ?? (item.type === 'income' ? 'Ingreso' : 'Sin categoría')}
+                    </p>
+                  </div>
+                  <div className="text-right whitespace-nowrap shrink-0 ml-2">
+                    <span className={`text-sm font-extrabold ${
+                      item.type === 'expense' ? 'text-rose-500' : 'text-emerald-500'
+                    }`}>
+                      {item.type === 'expense' ? '-' : '+'}{formatCLP(item.amount)}
+                    </span>
+                    <p className="text-[10px] text-[var(--color-text-secondary)] mt-0.5 font-semibold">
+                      {new Date(item.date + 'T12:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+      </div>
+
+      {/* Sheet de Detalle de Transacción */}
+      <Sheet
+        open={!!selectedTx}
+        onClose={() => setSelectedTx(null)}
+        title="Detalle de transacción"
+      >
+        {selectedTx && (
+          <div className="flex flex-col items-center py-4">
+            <div className="w-16 h-16 rounded-full bg-[var(--color-surface-alt)] flex items-center justify-center text-4xl shadow-inner mb-4">
+              {getCategoryEmoji(selectedTx.category?.name ?? (selectedTx.type === 'income' ? 'Ingreso' : ''))}
+            </div>
+            
+            <span className={`text-3xl font-extrabold tracking-tight ${
+              selectedTx.type === 'expense' ? 'text-rose-500' : 'text-emerald-500'
+            }`}>
+              {selectedTx.type === 'expense' ? '-' : '+'}{formatCLP(selectedTx.amount)}
+            </span>
+            
+            <h4 className="text-lg font-bold text-[var(--color-text)] mt-1.5">{selectedTx.description}</h4>
+            
+            <div className="w-full mt-6 rounded-2xl bg-[var(--color-surface-alt)] p-4 border border-[var(--color-border)] space-y-3">
+              <div className="flex justify-between text-xs font-semibold">
+                <span className="text-[var(--color-text-secondary)]">Categoría</span>
+                <span className="text-[var(--color-text)]">
+                  {selectedTx.category?.name ?? (selectedTx.type === 'income' ? 'Ingresos' : 'Sin categoría')}
+                </span>
+              </div>
+              <div className="flex justify-between text-xs font-semibold">
+                <span className="text-[var(--color-text-secondary)]">Fecha</span>
+                <span className="text-[var(--color-text)]">
+                  {formatDisplayDate(selectedTx.date)}
+                </span>
+              </div>
+              <div className="flex justify-between text-xs font-semibold">
+                <span className="text-[var(--color-text-secondary)]">Tipo</span>
+                <span className={selectedTx.type === 'expense' ? 'text-rose-500' : 'text-emerald-500'}>
+                  {selectedTx.type === 'expense' ? 'Gasto' : 'Ingreso'}
+                </span>
               </div>
             </div>
-          </>
+          </div>
         )}
-      </div>
+      </Sheet>
     </ProtectedRoute>
   );
 }

@@ -28,7 +28,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <PwaRegister />
       <TopBar />
       <SyncStatusIndicator />
-      <main className="pt-14 pb-16 min-h-screen">{children}</main>
+      <main className="pt-14 pb-[calc(4rem+env(safe-area-inset-bottom))] min-h-screen">{children}</main>
       <BottomNav />
       <Toaster
         position="top-center"

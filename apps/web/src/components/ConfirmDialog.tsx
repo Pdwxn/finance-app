@@ -24,7 +24,7 @@ export function ConfirmDialog({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-6">
       <div className="absolute inset-0 bg-black/40" onClick={onCancel} />
       <div className="relative w-full max-w-sm rounded-2xl bg-[var(--color-surface)] p-6">
         <h3 className="text-lg font-semibold text-[var(--color-text)]">{title}</h3>

@@ -35,14 +35,14 @@ export function Sheet({ open, onClose, title, children }: SheetProps) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end">
+    <div className="fixed inset-0 z-[100] flex items-end">
       <div
         className="absolute inset-0 bg-black/40 transition-opacity"
         onClick={onClose}
       />
       <div
         ref={sheetRef}
-        className="relative w-full max-h-[90vh] rounded-t-2xl bg-[var(--color-surface)] flex flex-col animate-slide-up"
+        className="relative w-full max-h-[90vh] rounded-t-2xl bg-[var(--color-surface)] flex flex-col animate-slide-up pb-[calc(1rem+env(safe-area-inset-bottom))]"
       >
         <div className="flex items-center justify-between px-4 pt-4 pb-2 border-b border-[var(--color-border)]">
           <h3 className="text-lg font-semibold text-[var(--color-text)]">{title}</h3>
