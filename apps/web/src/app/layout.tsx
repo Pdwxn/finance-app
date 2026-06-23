@@ -4,13 +4,20 @@ import { ThemeProvider } from '../components/ThemeProvider';
 import { AppShell } from '../components/AppShell';
 
 export const metadata: Metadata = {
-  title: 'Numa',
-  description: 'Personal finance manager',
+  title: {
+    absolute: 'Numa',
+  },
+  description: 'Gestor de finanzas personales offline-first',
   applicationName: 'Numa',
   appleWebApp: {
     capable: true,
     title: 'Numa',
     statusBarStyle: 'black-translucent',
+  },
+  openGraph: {
+    title: 'Numa',
+    siteName: 'Numa',
+    type: 'website',
   },
   icons: {
     icon: [
@@ -39,6 +46,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" suppressHydrationWarning>
+      <head>
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-title" content="Numa" />
+      </head>
       <body className="bg-[var(--color-surface)] text-[var(--color-text)] antialiased">
         <ThemeProvider>
           <AppShell>{children}</AppShell>

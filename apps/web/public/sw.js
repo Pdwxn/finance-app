@@ -1,5 +1,5 @@
-const CACHE = 'finance-app-v1';
-const API_CACHE = 'finance-app-api-v1';
+const CACHE = 'numa-app-v2';
+const API_CACHE = 'numa-app-api-v2';
 const STATIC_EXTENSIONS = ['.js', '.css', '.svg', '.png', '.jpg', '.woff2', '.woff'];
 
 self.addEventListener('install', (event) => {

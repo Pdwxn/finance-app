@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     id: '/',
     name: 'Numa',
     short_name: 'Numa',
-    description: 'Personal finance manager - offline first',
+    description: 'Gestor de finanzas personales offline-first',
     start_url: '/',
     scope: '/',
     display: 'standalone',
