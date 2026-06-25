@@ -91,6 +91,7 @@ export interface Debt extends BaseEntity {
 
 export interface DebtPayment extends BaseEntity {
   debtId: string;
+  accountId: string;
   amount: number; // Monto en centavos
   paymentDate: string; // Formato YYYY-MM-DD
 }

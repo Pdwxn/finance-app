@@ -1,10 +1,14 @@
 import { create } from 'zustand';
 import { db, enqueue } from '@finance-app/offline';
 import type { DebtPayment } from '@finance-app/types';
+import { useExpensesStore } from './expenses';
+import { useCategoriesStore } from './categories';
+import { useDebtsStore } from './debts';
 
 function toPayment(row: {
   id: string;
   debtId: string;
+  accountId: string;
   amount: number;
   paymentDate: string;
   createdAt: Date;
@@ -14,6 +18,7 @@ function toPayment(row: {
   return {
     id: row.id,
     debtId: row.debtId,
+    accountId: row.accountId,
     amount: row.amount,
     paymentDate: row.paymentDate,
     createdAt: row.createdAt.toISOString(),
@@ -29,6 +34,7 @@ interface DebtPaymentsState {
   fetchPayments: (debtId: string) => Promise<void>;
   createPayment: (data: {
     debtId: string;
+    accountId: string;
     amount: number;
     paymentDate: string;
   }) => Promise<void>;
@@ -61,6 +67,7 @@ export const useDebtPaymentsStore = create<DebtPaymentsState>((set) => ({
     await db.debtPayments.add({
       id,
       debtId: data.debtId,
+      accountId: data.accountId,
       amount: data.amount,
       paymentDate: data.paymentDate,
       createdAt: now, updatedAt: now, deletedAt: null,
@@ -68,10 +75,25 @@ export const useDebtPaymentsStore = create<DebtPaymentsState>((set) => ({
 
     await enqueue('create', 'debtPayments', id, data);
 
+    const debt = useDebtsStore.getState().debts.find(d => d.id === data.debtId);
+    const debtName = debt?.name ?? 'deuda';
+    const paymentCategory = useCategoriesStore.getState().getCategoryByName('Pago de deudas');
+
+    if (paymentCategory) {
+      await useExpensesStore.getState().createExpense({
+        accountId: data.accountId,
+        categoryId: paymentCategory.id,
+        amount: data.amount,
+        description: `Pago de deuda: ${debtName}`,
+        transactionDate: data.paymentDate,
+      });
+    }
+
     set(state => ({
       payments: [...state.payments, {
         id,
         debtId: data.debtId,
+        accountId: data.accountId,
         amount: data.amount,
         paymentDate: data.paymentDate,
         createdAt: now.toISOString(),

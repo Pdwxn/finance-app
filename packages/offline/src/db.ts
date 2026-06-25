@@ -113,6 +113,7 @@ interface Debt {
 interface DebtPayment {
   id: string;
   debtId: string;
+  accountId: string;
   amount: number;
   paymentDate: string;
   createdAt: Date;
