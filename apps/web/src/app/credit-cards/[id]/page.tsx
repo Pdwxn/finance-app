@@ -11,7 +11,10 @@ import { useCardChargesStore } from '@/store/card-charges';
 import { useCardPaymentsStore } from '@/store/card-payments';
 import { useAccountsStore } from '@/store/accounts';
 import { useCategoriesStore } from '@/store/categories';
-import { formatCLP } from '@finance-app/utils';
+import { useExpensesStore } from '@/store/expenses';
+import { useIncomesStore } from '@/store/incomes';
+import { useTransfersStore } from '@/store/transfers';
+import { formatCLP, toCents } from '@finance-app/utils';
 
 export default function CardDetailPage() {
   const params = useParams();
@@ -23,10 +26,14 @@ export default function CardDetailPage() {
   const { payments, fetchPayments, createPayment } = useCardPaymentsStore();
   const { accounts, fetchAccounts } = useAccountsStore();
   const { categories, fetchCategories } = useCategoriesStore();
+  const { expenses } = useExpensesStore();
+  const { incomes } = useIncomesStore();
+  const { transfers } = useTransfersStore();
 
   const [chargeOpen, setChargeOpen] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const [formLoading, setFormLoading] = useState(false);
 
   const card = cards.find(c => c.id === id);
@@ -91,9 +98,36 @@ export default function CardDetailPage() {
 
   const handleAddPayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    const amount = Math.round(Number.parseFloat(paymentAmount) * 100);
-    if (Number.isNaN(amount) || amount <= 0) return;
-    if (!paymentAccountId) return;
+    setFormError(null);
+
+    const parsed = Number.parseFloat(paymentAmount);
+    if (Number.isNaN(parsed) || parsed <= 0) { setFormError('Monto inválido'); return; }
+    if (!paymentAccountId) { setFormError('Selecciona una cuenta'); return; }
+
+    const amount = toCents(parsed);
+
+    const account = accounts.find(a => a.id === paymentAccountId);
+    if (!account) { setFormError('Cuenta no encontrada'); return; }
+
+    const incomeSum = incomes
+      .filter(i => i.accountId === paymentAccountId)
+      .reduce((s, i) => s + i.amount, 0);
+    const expenseSum = expenses
+      .filter(e => e.accountId === paymentAccountId)
+      .reduce((s, e) => s + e.amount, 0);
+    const transferOut = transfers
+      .filter(t => t.fromAccountId === paymentAccountId)
+      .reduce((s, t) => s + t.amount, 0);
+    const transferIn = transfers
+      .filter(t => t.toAccountId === paymentAccountId)
+      .reduce((s, t) => s + t.amount, 0);
+
+    const balance = account.initialBalance + incomeSum - expenseSum - transferOut + transferIn;
+
+    if (balance < amount) {
+      setFormError(`Saldo insuficiente. Disponible: ${formatCLP(balance)}`);
+      return;
+    }
 
     setFormLoading(true);
     await createPayment({
@@ -103,6 +137,7 @@ export default function CardDetailPage() {
       paymentDate,
     });
     setFormLoading(false);
+    setFormError(null);
     setPaymentOpen(false);
     setPaymentAccountId('');
     setPaymentAmount('');
@@ -270,6 +305,7 @@ export default function CardDetailPage() {
             <input id="pdate" type="date" value={paymentDate} onChange={e => setPaymentDate(e.target.value)}
               className="w-full h-11 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-[var(--color-text)] outline-none focus:border-[var(--color-primary)]" />
           </div>
+          {formError && <p className="text-sm text-[var(--color-danger)]">{formError}</p>}
           <button type="submit" disabled={formLoading}
             className="w-full h-11 rounded-lg bg-emerald-500 text-white font-medium hover:bg-emerald-600 disabled:opacity-50 transition-colors">
             {formLoading ? 'Guardando…' : 'Registrar pago'}

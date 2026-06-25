@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { db, enqueue } from '@finance-app/offline';
 import type { CardPayment } from '@finance-app/types';
+import { useExpensesStore } from './expenses';
+import { useCategoriesStore } from './categories';
+import { useCreditCardsStore } from './credit-cards';
 
 function toPayment(row: {
   id: string;
@@ -72,6 +75,20 @@ export const useCardPaymentsStore = create<CardPaymentsState>((set) => ({
     });
 
     await enqueue('create', 'cardPayments', id, data);
+
+    const card = useCreditCardsStore.getState().cards.find(c => c.id === data.creditCardId);
+    const cardName = card?.name ?? 'tarjeta';
+    const paymentCategory = useCategoriesStore.getState().getCategoryByName('Pago tarjeta');
+
+    if (paymentCategory) {
+      await useExpensesStore.getState().createExpense({
+        accountId: data.accountId,
+        categoryId: paymentCategory.id,
+        amount: data.amount,
+        description: `Pago tarjeta: ${cardName}`,
+        transactionDate: data.paymentDate,
+      });
+    }
 
     const payment = toPayment({
       id,
