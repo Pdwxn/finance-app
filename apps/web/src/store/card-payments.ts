@@ -38,6 +38,10 @@ interface CardPaymentsState {
     amount: number;
     paymentDate: string;
   }) => Promise<void>;
+  updatePayment: (
+    id: string,
+    data: Partial<Pick<CardPayment, 'creditCardId' | 'accountId' | 'amount' | 'paymentDate'>>
+  ) => Promise<void>;
   deletePayment: (id: string) => Promise<void>;
 }
 
@@ -100,6 +104,20 @@ export const useCardPaymentsStore = create<CardPaymentsState>((set) => ({
     });
 
     set(state => ({ payments: [...state.payments, payment] }));
+  },
+
+  updatePayment: async (id, data) => {
+    const now = new Date();
+    const updateData: Record<string, unknown> = { ...data, updatedAt: now };
+
+    await db.cardPayments.update(id, updateData);
+    await enqueue('update', 'cardPayments', id, data);
+
+    set(state => ({
+      payments: state.payments.map(p =>
+        p.id === id ? { ...p, ...data, updatedAt: now.toISOString() } : p
+      ),
+    }));
   },
 
   deletePayment: async id => {

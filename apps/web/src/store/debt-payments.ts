@@ -38,6 +38,7 @@ interface DebtPaymentsState {
     amount: number;
     paymentDate: string;
   }) => Promise<void>;
+  deletePayment: (id: string) => Promise<void>;
 }
 
 export const useDebtPaymentsStore = create<DebtPaymentsState>((set) => ({
@@ -100,6 +101,17 @@ export const useDebtPaymentsStore = create<DebtPaymentsState>((set) => ({
         updatedAt: now.toISOString(),
         deletedAt: null,
       }],
+    }));
+  },
+
+  deletePayment: async id => {
+    const now = new Date();
+
+    await db.debtPayments.update(id, { deletedAt: now, updatedAt: now });
+    await enqueue('delete', 'debtPayments', id, { deletedAt: now.toISOString() });
+
+    set(state => ({
+      payments: state.payments.filter(p => p.id !== id),
     }));
   },
 }));

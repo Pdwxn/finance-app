@@ -8,10 +8,11 @@ export function getById(id: string) {
   return debtPaymentsRepository.findById(id);
 }
 
-export async function create(data: { id: string; debtId: string; amount: number; paymentDate: string }) {
+export async function create(data: { id: string; debtId: string; accountId: string; amount: number; paymentDate: string }) {
   const payment = await debtPaymentsRepository.create({
     id: data.id,
     debtId: data.debtId,
+    accountId: data.accountId,
     amount: data.amount,
     paymentDate: data.paymentDate,
   });

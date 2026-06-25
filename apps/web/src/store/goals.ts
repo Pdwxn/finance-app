@@ -31,6 +31,10 @@ interface GoalsState {
   error: string | null;
   fetchGoals: () => Promise<void>;
   createGoal: (data: { name: string; targetAmount: number; targetDate: string }) => Promise<void>;
+  updateGoal: (
+    id: string,
+    data: Partial<Pick<Goal, 'name' | 'targetAmount' | 'targetDate'>>
+  ) => Promise<void>;
   deleteGoal: (id: string) => Promise<void>;
 }
 
@@ -82,6 +86,20 @@ export const useGoalsStore = create<GoalsState>((set) => ({
         updatedAt: now.toISOString(),
         deletedAt: null,
       }],
+    }));
+  },
+
+  updateGoal: async (id, data) => {
+    const now = new Date();
+    const updateData: Record<string, unknown> = { ...data, updatedAt: now };
+
+    await db.goals.update(id, updateData);
+    await enqueue('update', 'goals', id, data);
+
+    set(state => ({
+      goals: state.goals.map(g =>
+        g.id === id ? { ...g, ...data, updatedAt: now.toISOString() } : g
+      ),
     }));
   },
 

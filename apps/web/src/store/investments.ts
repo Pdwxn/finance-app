@@ -38,6 +38,10 @@ interface InvestmentsState {
     quantity: number;
     averageCost: number;
   }) => Promise<void>;
+  updateInvestment: (
+    id: string,
+    data: Partial<Pick<Investment, 'symbol' | 'name' | 'quantity' | 'averageCost'>>
+  ) => Promise<void>;
   deleteInvestment: (id: string) => Promise<void>;
 }
 
@@ -93,6 +97,20 @@ export const useInvestmentsStore = create<InvestmentsState>((set) => ({
         updatedAt: now.toISOString(),
         deletedAt: null,
       }],
+    }));
+  },
+
+  updateInvestment: async (id, data) => {
+    const now = new Date();
+    const updateData: Record<string, unknown> = { ...data, updatedAt: now };
+
+    await db.investments.update(id, updateData);
+    await enqueue('update', 'investments', id, data);
+
+    set(state => ({
+      investments: state.investments.map(i =>
+        i.id === id ? { ...i, ...data, updatedAt: now.toISOString() } : i
+      ),
     }));
   },
 

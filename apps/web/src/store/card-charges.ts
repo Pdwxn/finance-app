@@ -39,6 +39,10 @@ interface CardChargesState {
     description: string;
     transactionDate: string;
   }) => Promise<void>;
+  updateCharge: (
+    id: string,
+    data: Partial<Pick<CardCharge, 'creditCardId' | 'categoryId' | 'amount' | 'description' | 'transactionDate'>>
+  ) => Promise<void>;
   deleteCharge: (id: string) => Promise<void>;
 }
 
@@ -102,6 +106,20 @@ export const useCardChargesStore = create<CardChargesState>((set) => ({
     });
 
     set(state => ({ charges: [...state.charges, charge] }));
+  },
+
+  updateCharge: async (id, data) => {
+    const now = new Date();
+    const updateData: Record<string, unknown> = { ...data, updatedAt: now };
+
+    await db.cardCharges.update(id, updateData);
+    await enqueue('update', 'cardCharges', id, data);
+
+    set(state => ({
+      charges: state.charges.map(c =>
+        c.id === id ? { ...c, ...data, updatedAt: now.toISOString() } : c
+      ),
+    }));
   },
 
   deleteCharge: async id => {

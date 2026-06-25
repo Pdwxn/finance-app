@@ -38,6 +38,10 @@ interface DebtsState {
     interestRate: number;
     startDate: string;
   }) => Promise<void>;
+  updateDebt: (
+    id: string,
+    data: Partial<Pick<Debt, 'name' | 'initialAmount' | 'interestRate' | 'startDate'>>
+  ) => Promise<void>;
   deleteDebt: (id: string) => Promise<void>;
 }
 
@@ -94,6 +98,20 @@ export const useDebtsStore = create<DebtsState>((set) => ({
         updatedAt: now.toISOString(),
         deletedAt: null,
       }],
+    }));
+  },
+
+  updateDebt: async (id, data) => {
+    const now = new Date();
+    const updateData: Record<string, unknown> = { ...data, updatedAt: now };
+
+    await db.debts.update(id, updateData);
+    await enqueue('update', 'debts', id, data);
+
+    set(state => ({
+      debts: state.debts.map(d =>
+        d.id === id ? { ...d, ...data, updatedAt: now.toISOString() } : d
+      ),
     }));
   },
 

@@ -39,6 +39,7 @@ interface GoalContributionsState {
     amount: number;
     contributionDate: string;
   }) => Promise<void>;
+  deleteContribution: (id: string) => Promise<void>;
 }
 
 export const useGoalContributionsStore = create<GoalContributionsState>((set) => ({
@@ -104,6 +105,17 @@ export const useGoalContributionsStore = create<GoalContributionsState>((set) =>
         updatedAt: now.toISOString(),
         deletedAt: null,
       }],
+    }));
+  },
+
+  deleteContribution: async id => {
+    const now = new Date();
+
+    await db.goalContributions.update(id, { deletedAt: now, updatedAt: now });
+    await enqueue('delete', 'goalContributions', id, { deletedAt: now.toISOString() });
+
+    set(state => ({
+      contributions: state.contributions.filter(c => c.id !== id),
     }));
   },
 }));

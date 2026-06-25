@@ -158,6 +158,7 @@ export const debtSchema = z.object({
 export const debtPaymentSchema = z.object({
   id: z.string().uuid({ message: 'ID del pago debe ser un UUID válido' }),
   debtId: z.string().uuid({ message: 'ID de deuda debe ser un UUID válido' }),
+  accountId: z.string().uuid({ message: 'ID de cuenta debe ser un UUID válido' }),
   amount: z
     .number()
     .int({ message: 'El monto debe ser un entero' })
