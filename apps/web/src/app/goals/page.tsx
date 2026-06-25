@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/Skeleton';
 import { EmptyState } from '@/components/EmptyState';
 import { SwipeDeleteAction } from '@/hooks/useSwipeToDelete';
 import { useGoalsStore } from '@/store/goals';
-import { formatCLP } from '@finance-app/utils';
+import { formatCLP, toCents } from '@finance-app/utils';
 
 export default function GoalsPage() {
   const { goals, isLoading, fetchGoals, createGoal, deleteGoal } = useGoalsStore();
@@ -26,7 +26,7 @@ export default function GoalsPage() {
     e.preventDefault();
     setFormError(null);
     if (!name.trim()) { setFormError('El nombre es obligatorio'); return; }
-    const targetAmount = Math.round(Number.parseFloat(amount) * 100);
+    const targetAmount = toCents(Number.parseFloat(amount));
     if (Number.isNaN(targetAmount) || targetAmount <= 0) { setFormError('Monto inválido'); return; }
     if (!targetDate) { setFormError('La fecha objetivo es obligatoria'); return; }
 

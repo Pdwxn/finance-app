@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { db, enqueue } from '@finance-app/offline';
 import type { Expense } from '@finance-app/types';
+import { generateUUID } from '@finance-app/utils';
 import { useAuthStore } from './auth';
 
 function toExpense(row: {
@@ -79,7 +80,7 @@ export const useExpensesStore = create<ExpensesState>((set) => ({
     if (!userId) return;
 
     const now = new Date();
-    const id = crypto.randomUUID();
+    const id = generateUUID();
 
     await db.expenses.add({
       id,

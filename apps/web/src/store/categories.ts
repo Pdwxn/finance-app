@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { db, enqueue } from '@finance-app/offline';
 import type { Category } from '@finance-app/types';
+import { generateUUID } from '@finance-app/utils';
 import { useAuthStore } from './auth';
 
 const DEFAULT_CATEGORIES: Array<{
@@ -126,7 +127,7 @@ export const useCategoriesStore = create<CategoriesState>((set, get) => ({
     if (!userId) return;
 
     const now = new Date();
-    const id = crypto.randomUUID();
+    const id = generateUUID();
 
     await db.categories.add({
       id,
@@ -188,7 +189,7 @@ export const useCategoriesStore = create<CategoriesState>((set, get) => ({
 
     for (const cat of DEFAULT_CATEGORIES) {
       const now = new Date();
-      const id = crypto.randomUUID();
+      const id = generateUUID();
 
       await db.categories.add({
         id,

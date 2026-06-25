@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { db, enqueue } from '@finance-app/offline';
 import type { GoalContribution } from '@finance-app/types';
+import { generateUUID } from '@finance-app/utils';
 import { useAuthStore } from './auth';
 import { useExpensesStore } from './expenses';
 import { useCategoriesStore } from './categories';
@@ -63,11 +64,10 @@ export const useGoalContributionsStore = create<GoalContributionsState>((set) =>
   },
 
   createContribution: async data => {
-    const userId = useAuthStore.getState().user?.id;
-    if (!userId) return;
+    if (!useAuthStore.getState().user?.id) return;
 
     const now = new Date();
-    const id = crypto.randomUUID();
+    const id = generateUUID();
 
     await db.goalContributions.add({
       id,

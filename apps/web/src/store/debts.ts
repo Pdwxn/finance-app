@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { db, enqueue } from '@finance-app/offline';
 import type { Debt } from '@finance-app/types';
+import { generateUUID } from '@finance-app/utils';
 import { useAuthStore } from './auth';
 
 function toDebt(row: {
@@ -73,7 +74,7 @@ export const useDebtsStore = create<DebtsState>((set) => ({
     if (!userId) return;
 
     const now = new Date();
-    const id = crypto.randomUUID();
+    const id = generateUUID();
 
     await db.debts.add({
       id, userId,

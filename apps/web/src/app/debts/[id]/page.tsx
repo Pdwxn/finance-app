@@ -176,8 +176,13 @@ export default function DebtDetailPage() {
             <div className="flex flex-col gap-2">
               {sortedPayments.map(p => (
                 <div key={p.id} className="flex items-center justify-between rounded-xl bg-[var(--color-surface)] p-3 border border-[var(--color-border)]">
-                  <p className="text-xs text-[var(--color-text-secondary)]">{p.paymentDate}</p>
-                  <span className="text-sm font-semibold text-emerald-500">{formatCLP(p.amount)}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-[var(--color-text-secondary)]">{p.paymentDate}</p>
+                    <p className="text-xs text-[var(--color-text-secondary)]">
+                      {accounts.find(a => a.id === p.accountId)?.name ?? '?'}
+                    </p>
+                  </div>
+                  <span className="text-sm font-semibold text-emerald-500 ml-2">{formatCLP(p.amount)}</span>
                 </div>
               ))}
             </div>

@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { db, enqueue } from '@finance-app/offline';
 import type { InvestmentTransaction, InvestmentTransactionType } from '@finance-app/types';
+import { generateUUID } from '@finance-app/utils';
+import { useAuthStore } from './auth';
 
 function toTransaction(row: {
   id: string;
@@ -65,8 +67,11 @@ export const useInvestmentTransactionsStore = create<InvestmentTransactionsState
   },
 
   createTransaction: async data => {
+    const userId = useAuthStore.getState().user?.id;
+    if (!userId) return;
+
     const now = new Date();
-    const id = crypto.randomUUID();
+    const id = generateUUID();
 
     await db.investmentTransactions.add({
       id,

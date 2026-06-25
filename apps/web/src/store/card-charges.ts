@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { db, enqueue } from '@finance-app/offline';
 import type { CardCharge } from '@finance-app/types';
+import { generateUUID } from '@finance-app/utils';
+import { useAuthStore } from './auth';
 
 function toCharge(row: {
   id: string;
@@ -80,8 +82,11 @@ export const useCardChargesStore = create<CardChargesState>((set) => ({
   },
 
   createCharge: async data => {
+    const userId = useAuthStore.getState().user?.id;
+    if (!userId) return;
+
     const now = new Date();
-    const id = crypto.randomUUID();
+    const id = generateUUID();
 
     await db.cardCharges.add({
       id,
@@ -123,6 +128,9 @@ export const useCardChargesStore = create<CardChargesState>((set) => ({
   },
 
   deleteCharge: async id => {
+    const userId = useAuthStore.getState().user?.id;
+    if (!userId) return;
+
     const now = new Date();
 
     await db.cardCharges.update(id, { deletedAt: now, updatedAt: now });

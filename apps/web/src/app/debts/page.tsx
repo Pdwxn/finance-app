@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/Skeleton';
 import { EmptyState } from '@/components/EmptyState';
 import { SwipeDeleteAction } from '@/hooks/useSwipeToDelete';
 import { useDebtsStore } from '@/store/debts';
-import { formatCLP } from '@finance-app/utils';
+import { formatCLP, toCents } from '@finance-app/utils';
 
 export default function DebtsPage() {
   const { debts, isLoading, fetchDebts, createDebt, deleteDebt } = useDebtsStore();
@@ -27,7 +27,7 @@ export default function DebtsPage() {
     e.preventDefault();
     setFormError(null);
     if (!name.trim()) { setFormError('El nombre es obligatorio'); return; }
-    const initialAmount = Math.round(Number.parseFloat(amount) * 100);
+    const initialAmount = toCents(Number.parseFloat(amount));
     if (Number.isNaN(initialAmount) || initialAmount <= 0) { setFormError('Monto inválido'); return; }
     const interestRate = Number.parseFloat(rate);
     if (Number.isNaN(interestRate) || interestRate < 0) { setFormError('Tasa inválida'); return; }

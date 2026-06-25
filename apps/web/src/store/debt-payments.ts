@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { db, enqueue } from '@finance-app/offline';
 import type { DebtPayment } from '@finance-app/types';
+import { generateUUID } from '@finance-app/utils';
+import { useAuthStore } from './auth';
 import { useExpensesStore } from './expenses';
 import { useCategoriesStore } from './categories';
 import { useDebtsStore } from './debts';
@@ -62,8 +64,11 @@ export const useDebtPaymentsStore = create<DebtPaymentsState>((set) => ({
   },
 
   createPayment: async data => {
+    const userId = useAuthStore.getState().user?.id;
+    if (!userId) return;
+
     const now = new Date();
-    const id = crypto.randomUUID();
+    const id = generateUUID();
 
     await db.debtPayments.add({
       id,
@@ -105,6 +110,9 @@ export const useDebtPaymentsStore = create<DebtPaymentsState>((set) => ({
   },
 
   deletePayment: async id => {
+    const userId = useAuthStore.getState().user?.id;
+    if (!userId) return;
+
     const now = new Date();
 
     await db.debtPayments.update(id, { deletedAt: now, updatedAt: now });

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { db, enqueue } from '@finance-app/offline';
 import type { CreditCard } from '@finance-app/types';
+import { generateUUID } from '@finance-app/utils';
 import { useAuthStore } from './auth';
 
 function toCard(row: {
@@ -76,7 +77,7 @@ export const useCreditCardsStore = create<CreditCardsState>((set) => ({
     if (!userId) return;
 
     const now = new Date();
-    const id = crypto.randomUUID();
+    const id = generateUUID();
 
     await db.creditCards.add({
       id, userId,

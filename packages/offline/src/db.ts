@@ -216,7 +216,7 @@ class FinanceDB extends Dexie {
   constructor() {
     super('numa');
 
-    this.version(1).stores({
+    this.version(2).stores({
       accounts: '&id, userId, [userId+createdAt]',
       categories: '&id, userId, [userId+createdAt]',
       expenses: '&id, userId, accountId, categoryId, [userId+createdAt], [userId+transactionDate]',
@@ -226,7 +226,7 @@ class FinanceDB extends Dexie {
       cardCharges: '&id, creditCardId, categoryId, [creditCardId+createdAt]',
       cardPayments: '&id, creditCardId, accountId, [creditCardId+createdAt]',
       debts: '&id, userId, [userId+createdAt]',
-      debtPayments: '&id, debtId, [debtId+createdAt]',
+      debtPayments: '&id, debtId, accountId, [debtId+createdAt]',
       goals: '&id, userId, [userId+createdAt]',
       goalContributions: '&id, goalId, accountId, [goalId+createdAt]',
       investments: '&id, userId, [userId+createdAt]',

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { db, enqueue } from '@finance-app/offline';
 import type { Investment } from '@finance-app/types';
+import { generateUUID } from '@finance-app/utils';
 import { useAuthStore } from './auth';
 
 function toInvestment(row: {
@@ -73,7 +74,7 @@ export const useInvestmentsStore = create<InvestmentsState>((set) => ({
     if (!userId) return;
 
     const now = new Date();
-    const id = crypto.randomUUID();
+    const id = generateUUID();
 
     await db.investments.add({
       id, userId,
