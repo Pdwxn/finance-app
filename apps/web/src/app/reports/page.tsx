@@ -132,10 +132,33 @@ export default function ReportsPage() {
         <div className="rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] p-4">
           <h3 className="text-sm font-semibold text-[var(--color-text)] mb-1">Patrimonio neto</h3>
           <p className="text-2xl font-bold text-[var(--color-text)]">{formatCLP(netWorth)}</p>
-          <div className="flex gap-4 mt-2 text-xs">
-            <span className="text-emerald-500">Ingresos: {formatCLP(totalIncome)}</span>
-            <span className="text-rose-500">Gastos: {formatCLP(totalExpense)}</span>
-          </div>
+
+          {totalIncome === 0 && totalExpense === 0 ? (
+            <p className="text-xs text-[var(--color-text-secondary)] mt-3">No hay ingresos ni gastos registrados.</p>
+          ) : (
+            <div className="mt-3 space-y-2">
+              <div>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-emerald-500 font-medium">Ingresos</span>
+                  <span className="text-emerald-500 font-semibold">{formatCLP(totalIncome)}</span>
+                </div>
+                <div className="h-2 rounded-full bg-[var(--color-surface-alt)] overflow-hidden">
+                  <div className="h-full rounded-full bg-emerald-500 transition-all"
+                    style={{ width: `${Math.min(100, totalIncome > 0 ? (totalIncome / (totalIncome + totalExpense)) * 100 : 0)}%` }} />
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-rose-500 font-medium">Gastos</span>
+                  <span className="text-rose-500 font-semibold">{formatCLP(totalExpense)}</span>
+                </div>
+                <div className="h-2 rounded-full bg-[var(--color-surface-alt)] overflow-hidden">
+                  <div className="h-full rounded-full bg-rose-500 transition-all"
+                    style={{ width: `${Math.min(100, totalExpense > 0 ? (totalExpense / (totalIncome + totalExpense)) * 100 : 0)}%` }} />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] p-4">
