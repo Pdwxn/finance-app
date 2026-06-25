@@ -1,6 +1,10 @@
 import { create } from 'zustand';
 import { db, enqueue } from '@finance-app/offline';
 import type { GoalContribution } from '@finance-app/types';
+import { useAuthStore } from './auth';
+import { useExpensesStore } from './expenses';
+import { useCategoriesStore } from './categories';
+import { useGoalsStore } from './goals';
 
 function toContribution(row: {
   id: string;
@@ -58,6 +62,9 @@ export const useGoalContributionsStore = create<GoalContributionsState>((set) =>
   },
 
   createContribution: async data => {
+    const userId = useAuthStore.getState().user?.id;
+    if (!userId) return;
+
     const now = new Date();
     const id = crypto.randomUUID();
 
@@ -71,6 +78,20 @@ export const useGoalContributionsStore = create<GoalContributionsState>((set) =>
     });
 
     await enqueue('create', 'goalContributions', id, data);
+
+    const goal = useGoalsStore.getState().goals.find(g => g.id === data.goalId);
+    const goalName = goal?.name ?? 'meta';
+    const savingsCategory = useCategoriesStore.getState().getCategoryByName('Ahorro/Inversión');
+
+    if (savingsCategory) {
+      await useExpensesStore.getState().createExpense({
+        accountId: data.accountId,
+        categoryId: savingsCategory.id,
+        amount: data.amount,
+        description: `Aporte a meta: ${goalName}`,
+        transactionDate: data.contributionDate,
+      });
+    }
 
     set(state => ({
       contributions: [...state.contributions, {

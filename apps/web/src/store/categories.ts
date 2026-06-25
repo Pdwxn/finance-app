@@ -19,6 +19,9 @@ const DEFAULT_CATEGORIES: Array<{
   { name: 'Entretenimiento', type: 'expense', icon: '🍿', color: '#8b5cf6' },
   { name: 'Shopping', type: 'expense', icon: '🛍️', color: '#ec4899' },
   { name: 'Educación', type: 'expense', icon: '📚', color: '#6366f1' },
+  { name: 'Ahorro/Inversión', type: 'expense', icon: '🏦', color: '#8b5cf6' },
+  { name: 'Pago de deudas', type: 'expense', icon: '💳', color: '#ef4444' },
+  { name: 'Pago tarjeta', type: 'expense', icon: '💳', color: '#f43f5e' },
   // Ingresos
   { name: 'Salario', type: 'income', icon: '💰', color: '#22c55e' },
   { name: 'Freelance', type: 'income', icon: '💻', color: '#14b8a6' },
@@ -56,6 +59,7 @@ interface CategoriesState {
   error: string | null;
   fetchCategories: () => Promise<void>;
   getCategoryById: (id: string) => Category | undefined;
+  getCategoryByName: (name: string) => Category | undefined;
   createCategory: (data: {
     name: string;
     type: Category['type'];
@@ -111,6 +115,10 @@ export const useCategoriesStore = create<CategoriesState>((set, get) => ({
 
   getCategoryById: id => {
     return get().categories.find(c => c.id === id);
+  },
+
+  getCategoryByName: name => {
+    return get().categories.find(c => c.name === name);
   },
 
   createCategory: async data => {

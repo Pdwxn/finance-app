@@ -10,7 +10,10 @@ import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { useGoalsStore } from '@/store/goals';
 import { useGoalContributionsStore } from '@/store/goal-contributions';
 import { useAccountsStore } from '@/store/accounts';
-import { formatCLP } from '@finance-app/utils';
+import { useExpensesStore } from '@/store/expenses';
+import { useIncomesStore } from '@/store/incomes';
+import { useTransfersStore } from '@/store/transfers';
+import { formatCLP, toCents } from '@finance-app/utils';
 
 export default function GoalDetailPage() {
   const params = useParams();
@@ -20,9 +23,13 @@ export default function GoalDetailPage() {
   const { goals, fetchGoals, deleteGoal } = useGoalsStore();
   const { contributions, fetchContributions, createContribution } = useGoalContributionsStore();
   const { accounts, fetchAccounts } = useAccountsStore();
+  const { expenses } = useExpensesStore();
+  const { incomes } = useIncomesStore();
+  const { transfers } = useTransfersStore();
 
   const [contributeOpen, setContributeOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const [formLoading, setFormLoading] = useState(false);
 
   const goal = goals.find(g => g.id === id);
@@ -55,9 +62,36 @@ export default function GoalDetailPage() {
 
   const handleAddContribution = async (e: React.FormEvent) => {
     e.preventDefault();
-    const amount = Math.round(Number.parseFloat(contributeAmount) * 100);
-    if (Number.isNaN(amount) || amount <= 0) return;
-    if (!contributeAccountId) return;
+    setFormError(null);
+
+    const parsed = Number.parseFloat(contributeAmount);
+    if (Number.isNaN(parsed) || parsed <= 0) { setFormError('Monto inválido'); return; }
+    if (!contributeAccountId) { setFormError('Selecciona una cuenta'); return; }
+
+    const amount = toCents(parsed);
+
+    const account = accounts.find(a => a.id === contributeAccountId);
+    if (!account) { setFormError('Cuenta no encontrada'); return; }
+
+    const incomeSum = incomes
+      .filter(i => i.accountId === contributeAccountId)
+      .reduce((s, i) => s + i.amount, 0);
+    const expenseSum = expenses
+      .filter(e => e.accountId === contributeAccountId)
+      .reduce((s, e) => s + e.amount, 0);
+    const transferOut = transfers
+      .filter(t => t.fromAccountId === contributeAccountId)
+      .reduce((s, t) => s + t.amount, 0);
+    const transferIn = transfers
+      .filter(t => t.toAccountId === contributeAccountId)
+      .reduce((s, t) => s + t.amount, 0);
+
+    const balance = account.initialBalance + incomeSum - expenseSum - transferOut + transferIn;
+
+    if (balance < amount) {
+      setFormError(`Saldo insuficiente. Disponible: ${formatCLP(balance)}`);
+      return;
+    }
 
     setFormLoading(true);
     await createContribution({
@@ -67,6 +101,7 @@ export default function GoalDetailPage() {
       contributionDate: contributeDate,
     });
     setFormLoading(false);
+    setFormError(null);
     setContributeOpen(false);
     setContributeAccountId('');
     setContributeAmount('');
@@ -181,6 +216,7 @@ export default function GoalDetailPage() {
             <input type="date" value={contributeDate} onChange={e => setContributeDate(e.target.value)}
               className="w-full h-11 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-[var(--color-text)] outline-none focus:border-[var(--color-primary)]" />
           </div>
+          {formError && <p className="text-sm text-[var(--color-danger)]">{formError}</p>}
           <button type="submit" disabled={formLoading}
             className="w-full h-11 rounded-lg bg-[var(--color-primary)] text-white font-medium hover:bg-[var(--color-primary-dark)] disabled:opacity-50 transition-colors">
             {formLoading ? 'Guardando…' : 'Aportar'}

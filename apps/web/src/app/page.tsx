@@ -88,8 +88,19 @@ export default function Home() {
     setSelectedDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
   };
 
+  const isCurrentMonth = useMemo(() => {
+    const now = new Date();
+    return selectedDate.getMonth() === now.getMonth() && selectedDate.getFullYear() === now.getFullYear();
+  }, [selectedDate]);
+
   const handleNextMonth = () => {
-    setSelectedDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+    setSelectedDate(prev => {
+      const next = new Date(prev.getFullYear(), prev.getMonth() + 1, 1);
+      const now = new Date();
+      const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      if (next > currentMonth) return prev;
+      return next;
+    });
   };
 
   const netWorth = useMemo(() => {
@@ -219,7 +230,8 @@ export default function Home() {
             <span className="text-xs font-bold text-[var(--color-text)] px-1 capitalize min-w-[100px] text-center">
               {monthLabel}
             </span>
-            <button onClick={handleNextMonth} className="p-1 hover:bg-[var(--color-surface-alt)] rounded-lg transition-colors text-[var(--color-text-secondary)]">
+            <button onClick={handleNextMonth} disabled={isCurrentMonth}
+              className={`p-1 rounded-lg transition-colors ${isCurrentMonth ? 'text-[var(--color-border)] cursor-not-allowed' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-alt)]'}`}>
               <ChevronRightIcon className="w-4 h-4" />
             </button>
           </div>
