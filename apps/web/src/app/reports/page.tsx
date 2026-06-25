@@ -84,11 +84,9 @@ export default function ReportsPage() {
   const totalExpense = useMemo(() => expenses.reduce((s, e) => s + e.amount, 0), [expenses]);
 
   const netWorth = useMemo(() => {
-    const totalAssets = accounts.reduce((s, a) => {
-      return s + a.initialBalance + totalIncome - totalExpense;
-    }, 0);
-    const totalDebts = debts.reduce((s, d) => d.initialAmount + s, 0);
-    return totalAssets - totalDebts;
+    const totalAssets = accounts.reduce((s, a) => s + a.initialBalance, 0);
+    const totalDebts = debts.reduce((s, d) => s + d.initialAmount, 0);
+    return totalAssets + totalIncome - totalExpense - totalDebts;
   }, [accounts, debts, totalIncome, totalExpense]);
 
   function CashflowTooltip(props: TooltipContentProps) {

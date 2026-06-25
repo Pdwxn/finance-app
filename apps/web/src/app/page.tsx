@@ -15,6 +15,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { Skeleton } from '@/components/Skeleton';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Sheet } from '@/components/Sheet';
+import { TransactionSheet } from '@/components/TransactionSheet';
 import { useAccountsStore } from '@/store/accounts';
 import { useExpensesStore } from '@/store/expenses';
 import { useIncomesStore } from '@/store/incomes';
@@ -62,6 +63,7 @@ export default function Home() {
 
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [selectedTx, setSelectedTx] = useState<DashboardTransaction | null>(null);
+  const [transactionSheetOpen, setTransactionSheetOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -366,6 +368,14 @@ export default function Home() {
         </div>
 
       </div>
+
+      {/* FAB */}
+      <button onClick={() => setTransactionSheetOpen(true)}
+        className="fixed bottom-20 right-4 z-50 w-14 h-14 rounded-full bg-[var(--color-primary)] text-white shadow-lg shadow-[var(--color-primary)]/30 hover:bg-[var(--color-primary-dark)] transition-all active:scale-95 flex items-center justify-center">
+        <PlusIcon className="w-6 h-6" />
+      </button>
+
+      <TransactionSheet open={transactionSheetOpen} onClose={() => setTransactionSheetOpen(false)} />
 
       {/* Sheet de Detalle de Transacción */}
       <Sheet

@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { ArrowTrendingUpIcon, ArrowTrendingDownIcon, ArrowsRightLeftIcon, ReceiptPercentIcon, FunnelIcon } from '@heroicons/react/24/outline';
+import { ArrowTrendingUpIcon, ArrowTrendingDownIcon, ArrowsRightLeftIcon, ReceiptPercentIcon, FunnelIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Skeleton } from '@/components/Skeleton';
 import { EmptyState } from '@/components/EmptyState';
+import { TransactionSheet } from '@/components/TransactionSheet';
 import { useExpensesStore } from '@/store/expenses';
 import { useIncomesStore } from '@/store/incomes';
 import { useTransfersStore } from '@/store/transfers';
@@ -32,6 +33,7 @@ export default function TransactionsPage() {
   const { transfers, isLoading: loadingTransfers, fetchTransfers } = useTransfersStore();
   const { accounts, fetchAccounts } = useAccountsStore();
 
+  const [transactionSheetOpen, setTransactionSheetOpen] = useState(false);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('month');
   const [accountFilter, setAccountFilter] = useState<string>('all');
@@ -157,8 +159,15 @@ export default function TransactionsPage() {
               );
             })}
           </div>
-        )}
-      </div>
+          )}
+        </div>
+
+        <button onClick={() => setTransactionSheetOpen(true)}
+        className="fixed bottom-20 right-4 z-50 w-14 h-14 rounded-full bg-[var(--color-primary)] text-white shadow-lg shadow-[var(--color-primary)]/30 hover:bg-[var(--color-primary-dark)] transition-all active:scale-95 flex items-center justify-center">
+        <PlusIcon className="w-6 h-6" />
+      </button>
+
+      <TransactionSheet open={transactionSheetOpen} onClose={() => setTransactionSheetOpen(false)} />
     </ProtectedRoute>
   );
 }
