@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
-import { DocumentTextIcon, CreditCardIcon, ExclamationTriangleIcon, BoltIcon, ArrowTrendingUpIcon } from '@heroicons/react/24/outline';
+import { DocumentTextIcon, CreditCardIcon, ExclamationTriangleIcon, BoltIcon, ArrowTrendingUpIcon, TagIcon } from '@heroicons/react/24/outline';
 
 const sections = [
   { label: 'Reportes', href: '/reports', icon: DocumentTextIcon },
@@ -10,6 +10,7 @@ const sections = [
   { label: 'Deudas', href: '/debts', icon: ExclamationTriangleIcon },
   { label: 'Metas', href: '/goals', icon: BoltIcon },
   { label: 'Inversiones', href: '/investments', icon: ArrowTrendingUpIcon },
+  { label: 'Categorías', href: '/categories', icon: TagIcon },
 ];
 
 export default function MorePage() {
