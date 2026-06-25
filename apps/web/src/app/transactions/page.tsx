@@ -163,7 +163,7 @@ export default function TransactionsPage() {
         </div>
 
         <button onClick={() => setTransactionSheetOpen(true)}
-        className="fixed bottom-20 right-4 z-50 w-14 h-14 rounded-full bg-[var(--color-primary)] text-white shadow-lg shadow-[var(--color-primary)]/30 hover:bg-[var(--color-primary-dark)] transition-all active:scale-95 flex items-center justify-center">
+        className="fixed bottom-28 right-4 z-50 w-14 h-14 rounded-full bg-[var(--color-primary)] text-white shadow-lg shadow-[var(--color-primary)]/30 hover:bg-[var(--color-primary-dark)] transition-all active:scale-95 flex items-center justify-center">
         <PlusIcon className="w-6 h-6" />
       </button>
 

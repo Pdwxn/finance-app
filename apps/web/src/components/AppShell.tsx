@@ -36,7 +36,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <PwaRegister />
       <TopBar />
       <SyncStatusIndicator />
-      <main className={`${isOffline ? 'pt-20' : 'pt-14'} pb-[calc(4.5rem+env(safe-area-inset-bottom))] min-h-screen`}>{children}</main>
+      <main className={`${isOffline ? 'pt-[calc(5rem+env(safe-area-inset-top))]' : 'pt-[calc(3.5rem+env(safe-area-inset-top))]'} pb-[calc(4.5rem+env(safe-area-inset-bottom))] min-h-screen`}>{children}</main>
       <BottomNav />
       <Toaster
         position="top-center"

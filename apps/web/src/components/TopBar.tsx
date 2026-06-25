@@ -40,7 +40,7 @@ export function TopBar() {
 
   if (pathname === '/') {
     return (
-      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-surface)] px-4 h-14">
+      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-surface)] px-4 min-h-14 pt-[env(safe-area-inset-top)]">
         <div className="flex items-center h-7 select-none">
           <img
             src={theme === 'dark' ? '/brand/hor-logo-dark.svg' : '/brand/hor-logo-light.svg'}
@@ -60,7 +60,7 @@ export function TopBar() {
   }
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 flex items-center gap-2 border-b border-[var(--color-border)] bg-[var(--color-surface)] px-2 h-14">
+    <header className="fixed top-0 left-0 right-0 z-50 flex items-center gap-2 border-b border-[var(--color-border)] bg-[var(--color-surface)] px-2 min-h-14 pt-[env(safe-area-inset-top)]">
       {showBack && (
         <button onClick={() => router.back()}
           className="flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-alt)] transition-colors"

@@ -25,7 +25,7 @@ export function SyncStatusIndicator() {
   if (status === 'online') return null;
 
   return (
-    <div className={`fixed top-14 left-0 right-0 z-40 flex items-center justify-center gap-1.5 py-1 text-xs font-medium ${
+    <div className={`fixed top-[calc(3.5rem+env(safe-area-inset-top))] left-0 right-0 z-40 flex items-center justify-center gap-1.5 py-1 text-xs font-medium ${
       status === 'syncing'
         ? 'bg-blue-500 text-white'
         : 'bg-amber-500 text-white'
