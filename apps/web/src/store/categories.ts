@@ -4,6 +4,8 @@ import type { Category } from '@finance-app/types';
 import { generateUUID } from '@finance-app/utils';
 import { useAuthStore } from './auth';
 
+let seedingPromise: Promise<void> | null = null;
+
 const DEFAULT_CATEGORIES: Array<{
   name: string;
   type: Category['type'];
@@ -98,7 +100,12 @@ export const useCategoriesStore = create<CategoriesState>((set, get) => ({
       const categories = rows.map(toCategory);
 
       if (categories.length === 0) {
-        await get().seedDefaultCategories();
+        if (!seedingPromise) {
+          seedingPromise = get().seedDefaultCategories().finally(() => {
+            seedingPromise = null;
+          });
+        }
+        await seedingPromise;
         const seededRows = await db.categories
           .where('userId')
           .equals(userId)
@@ -141,7 +148,7 @@ export const useCategoriesStore = create<CategoriesState>((set, get) => ({
       deletedAt: null,
     });
 
-    await enqueue('create', 'categories', id, { ...data, userId });
+    await enqueue('create', 'categories', id, { ...data, userId, updatedAt: now.toISOString() });
 
     const category = toCategory({
       id,
@@ -163,7 +170,7 @@ export const useCategoriesStore = create<CategoriesState>((set, get) => ({
     const updateData: Record<string, unknown> = { ...data, updatedAt: now };
 
     await db.categories.update(id, updateData);
-    await enqueue('update', 'categories', id, data);
+    await enqueue('update', 'categories', id, { ...data, updatedAt: now.toISOString() });
 
     set(state => ({
       categories: state.categories.map(c =>
@@ -176,7 +183,7 @@ export const useCategoriesStore = create<CategoriesState>((set, get) => ({
     const now = new Date();
 
     await db.categories.update(id, { deletedAt: now, updatedAt: now });
-    await enqueue('delete', 'categories', id, { deletedAt: now.toISOString() });
+    await enqueue('delete', 'categories', id, { deletedAt: now.toISOString(), updatedAt: now.toISOString() });
 
     set(state => ({
       categories: state.categories.filter(c => c.id !== id),
@@ -187,8 +194,18 @@ export const useCategoriesStore = create<CategoriesState>((set, get) => ({
     const userId = useAuthStore.getState().user?.id;
     if (!userId) return;
 
+    const existing = await db.categories
+      .where('userId')
+      .equals(userId)
+      .filter(c => c.deletedAt === null)
+      .toArray();
+
+    const existingNames = new Set(existing.map(c => c.name));
+    const now = new Date();
+
     for (const cat of DEFAULT_CATEGORIES) {
-      const now = new Date();
+      if (existingNames.has(cat.name)) continue;
+
       const id = generateUUID();
 
       await db.categories.add({
@@ -203,7 +220,7 @@ export const useCategoriesStore = create<CategoriesState>((set, get) => ({
         deletedAt: null,
       });
 
-      await enqueue('create', 'categories', id, { ...cat, userId });
+      await enqueue('create', 'categories', id, { ...cat, userId, updatedAt: now.toISOString() });
     }
   },
 }));
