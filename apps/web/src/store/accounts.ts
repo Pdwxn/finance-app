@@ -92,7 +92,7 @@ export const useAccountsStore = create<AccountsState>((set, get) => ({
       deletedAt: null,
     });
 
-    await enqueue('create', 'accounts', id, { ...data, userId });
+    await enqueue('create', 'accounts', id, { ...data, userId, updatedAt: now.toISOString() });
 
     const account = toAccount({
       id,
@@ -114,7 +114,7 @@ export const useAccountsStore = create<AccountsState>((set, get) => ({
     const updateData: Record<string, unknown> = { ...data, updatedAt: now };
 
     await db.accounts.update(id, updateData);
-    await enqueue('update', 'accounts', id, data);
+    await enqueue('update', 'accounts', id, { ...data, updatedAt: now.toISOString() });
 
     set(state => ({
       accounts: state.accounts.map(a =>
@@ -127,7 +127,7 @@ export const useAccountsStore = create<AccountsState>((set, get) => ({
     const now = new Date();
 
     await db.accounts.update(id, { deletedAt: now, updatedAt: now });
-    await enqueue('delete', 'accounts', id, { deletedAt: now.toISOString() });
+    await enqueue('delete', 'accounts', id, { deletedAt: now.toISOString(), updatedAt: now.toISOString() });
 
     set(state => ({
       accounts: state.accounts.filter(a => a.id !== id),

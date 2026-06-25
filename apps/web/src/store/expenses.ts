@@ -95,7 +95,7 @@ export const useExpensesStore = create<ExpensesState>((set) => ({
       deletedAt: null,
     });
 
-    await enqueue('create', 'expenses', id, { ...data, userId });
+    await enqueue('create', 'expenses', id, { ...data, userId, updatedAt: now.toISOString() });
 
     const expense = toExpense({
       id,
@@ -118,7 +118,7 @@ export const useExpensesStore = create<ExpensesState>((set) => ({
     const updateData: Record<string, unknown> = { ...data, updatedAt: now };
 
     await db.expenses.update(id, updateData);
-    await enqueue('update', 'expenses', id, data);
+    await enqueue('update', 'expenses', id, { ...data, updatedAt: now.toISOString() });
 
     set(state => ({
       expenses: state.expenses.map(e =>
@@ -131,7 +131,7 @@ export const useExpensesStore = create<ExpensesState>((set) => ({
     const now = new Date();
 
     await db.expenses.update(id, { deletedAt: now, updatedAt: now });
-    await enqueue('delete', 'expenses', id, { deletedAt: now.toISOString() });
+    await enqueue('delete', 'expenses', id, { deletedAt: now.toISOString(), updatedAt: now.toISOString() });
 
     set(state => ({
       expenses: state.expenses.filter(e => e.id !== id),

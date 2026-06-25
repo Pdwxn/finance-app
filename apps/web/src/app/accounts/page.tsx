@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { PlusIcon, FolderOpenIcon } from '@heroicons/react/24/outline';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
@@ -11,17 +11,28 @@ import { AccountForm } from '@/components/AccountForm';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { SwipeDeleteAction } from '@/hooks/useSwipeToDelete';
 import { useAccountsStore } from '@/store/accounts';
+import { useExpensesStore } from '@/store/expenses';
+import { useIncomesStore } from '@/store/incomes';
+import { useTransfersStore } from '@/store/transfers';
 import { formatCLP } from '@finance-app/utils';
 import type { Account } from '@finance-app/types';
 
 export default function AccountsPage() {
   const { accounts, isLoading, fetchAccounts, createAccount, updateAccount, deleteAccount } = useAccountsStore();
+  const { expenses, fetchExpenses } = useExpensesStore();
+  const { incomes, fetchIncomes } = useIncomesStore();
+  const { transfers, fetchTransfers } = useTransfersStore();
   const [createOpen, setCreateOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<string | null>(null);
   const [deletingAccount, setDeletingAccount] = useState<string | null>(null);
   const [formLoading, setFormLoading] = useState(false);
 
-  useEffect(() => { fetchAccounts(); }, [fetchAccounts]);
+  useEffect(() => {
+    fetchAccounts();
+    fetchExpenses();
+    fetchIncomes();
+    fetchTransfers();
+  }, [fetchAccounts, fetchExpenses, fetchIncomes, fetchTransfers]);
 
   const handleCreate = useCallback(async (data: { name: string; type: Account['type']; currency: string; initialBalance: number }) => {
     setFormLoading(true);
@@ -48,6 +59,18 @@ export default function AccountsPage() {
 
   const editAccount = accounts.find(a => a.id === editingAccount);
   const deleteAccountData = accounts.find(a => a.id === deletingAccount);
+
+  const accountBalances = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const a of accounts) {
+      const incomeSum = incomes.filter(i => i.accountId === a.id).reduce((s, i) => s + i.amount, 0);
+      const expenseSum = expenses.filter(e => e.accountId === a.id).reduce((s, e) => s + e.amount, 0);
+      const transferInSum = transfers.filter(t => t.toAccountId === a.id).reduce((s, t) => s + t.amount, 0);
+      const transferOutSum = transfers.filter(t => t.fromAccountId === a.id).reduce((s, t) => s + t.amount, 0);
+      map.set(a.id, a.initialBalance + incomeSum - expenseSum + transferInSum - transferOutSum);
+    }
+    return map;
+  }, [accounts, incomes, expenses, transfers]);
 
   return (
     <ProtectedRoute>
@@ -82,7 +105,7 @@ export default function AccountsPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 ml-3">
-                    <span className="text-base font-semibold text-[var(--color-text)]">{formatCLP(account.initialBalance)}</span>
+                    <span className="text-base font-semibold text-[var(--color-text)]">{formatCLP(accountBalances.get(account.id) ?? account.initialBalance)}</span>
                     <button
                       onClick={(e) => {
                         e.preventDefault();

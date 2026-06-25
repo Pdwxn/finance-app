@@ -95,7 +95,7 @@ export const useIncomesStore = create<IncomesState>((set) => ({
       deletedAt: null,
     });
 
-    await enqueue('create', 'incomes', id, { ...data, userId });
+    await enqueue('create', 'incomes', id, { ...data, userId, updatedAt: now.toISOString() });
 
     const income = toIncome({
       id,
@@ -118,7 +118,7 @@ export const useIncomesStore = create<IncomesState>((set) => ({
     const updateData: Record<string, unknown> = { ...data, updatedAt: now };
 
     await db.incomes.update(id, updateData);
-    await enqueue('update', 'incomes', id, data);
+    await enqueue('update', 'incomes', id, { ...data, updatedAt: now.toISOString() });
 
     set(state => ({
       incomes: state.incomes.map(i =>
@@ -131,7 +131,7 @@ export const useIncomesStore = create<IncomesState>((set) => ({
     const now = new Date();
 
     await db.incomes.update(id, { deletedAt: now, updatedAt: now });
-    await enqueue('delete', 'incomes', id, { deletedAt: now.toISOString() });
+    await enqueue('delete', 'incomes', id, { deletedAt: now.toISOString(), updatedAt: now.toISOString() });
 
     set(state => ({
       incomes: state.incomes.filter(i => i.id !== id),

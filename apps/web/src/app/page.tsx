@@ -20,6 +20,7 @@ import { useAccountsStore } from '@/store/accounts';
 import { useExpensesStore } from '@/store/expenses';
 import { useIncomesStore } from '@/store/incomes';
 import { useCategoriesStore } from '@/store/categories';
+import { useCardChargesStore } from '@/store/card-charges';
 import { formatCLP } from '@finance-app/utils';
 import type { Category } from '@finance-app/types';
 
@@ -29,6 +30,7 @@ interface DashboardTransaction {
   amount: number;
   description: string;
   date: string;
+  createdAt: string;
   category?: Category;
 }
 
@@ -60,6 +62,7 @@ export default function Home() {
   const { expenses, isLoading: expensesLoading, fetchExpenses } = useExpensesStore();
   const { incomes, isLoading: incomesLoading, fetchIncomes } = useIncomesStore();
   const { categories, isLoading: categoriesLoading, fetchCategories } = useCategoriesStore();
+  const { charges, isLoading: chargesLoading, fetchAllCharges } = useCardChargesStore();
 
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [selectedTx, setSelectedTx] = useState<DashboardTransaction | null>(null);
@@ -72,7 +75,8 @@ export default function Home() {
     fetchExpenses();
     fetchIncomes();
     fetchCategories();
-  }, [fetchAccounts, fetchExpenses, fetchIncomes, fetchCategories]);
+    fetchAllCharges();
+  }, [fetchAccounts, fetchExpenses, fetchIncomes, fetchCategories, fetchAllCharges]);
 
   const { monthStart, monthEnd, monthLabel } = useMemo(() => {
     const year = selectedDate.getFullYear();
@@ -146,6 +150,7 @@ export default function Home() {
         amount: e.amount,
         description: e.description,
         date: e.transactionDate,
+        createdAt: e.createdAt,
         category: categories.find(c => c.id === e.categoryId),
       }));
 
@@ -157,15 +162,28 @@ export default function Home() {
         amount: i.amount,
         description: i.description,
         date: i.transactionDate,
+        createdAt: i.createdAt,
         category: undefined,
       }));
 
-    return [...monthExpenses, ...monthIncomes]
-      .sort((a, b) => b.date.localeCompare(a.date))
-      .slice(0, 5);
-  }, [expenses, incomes, categories, monthStart, monthEnd]);
+    const monthCharges = charges
+      .filter(c => c.transactionDate >= monthStart && c.transactionDate <= monthEnd)
+      .map(c => ({
+        id: c.id,
+        type: 'expense' as const,
+        amount: c.amount,
+        description: c.description,
+        date: c.transactionDate,
+        createdAt: c.createdAt,
+        category: categories.find(cat => cat.id === c.categoryId),
+      }));
 
-  const isStoreLoading = accountsLoading || expensesLoading || incomesLoading || categoriesLoading;
+    return [...monthExpenses, ...monthIncomes, ...monthCharges]
+      .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt))
+      .slice(0, 5);
+  }, [expenses, incomes, charges, categories, monthStart, monthEnd]);
+
+  const isStoreLoading = accountsLoading || expensesLoading || incomesLoading || categoriesLoading || chargesLoading;
 
   if (!mounted || isStoreLoading) {
     return (

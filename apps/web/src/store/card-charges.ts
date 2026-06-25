@@ -98,7 +98,7 @@ export const useCardChargesStore = create<CardChargesState>((set) => ({
       createdAt: now, updatedAt: now, deletedAt: null,
     });
 
-    await enqueue('create', 'cardCharges', id, data);
+    await enqueue('create', 'cardCharges', id, { ...data, updatedAt: now.toISOString() });
 
     const charge = toCharge({
       id,
@@ -118,7 +118,7 @@ export const useCardChargesStore = create<CardChargesState>((set) => ({
     const updateData: Record<string, unknown> = { ...data, updatedAt: now };
 
     await db.cardCharges.update(id, updateData);
-    await enqueue('update', 'cardCharges', id, data);
+    await enqueue('update', 'cardCharges', id, { ...data, updatedAt: now.toISOString() });
 
     set(state => ({
       charges: state.charges.map(c =>
@@ -134,7 +134,7 @@ export const useCardChargesStore = create<CardChargesState>((set) => ({
     const now = new Date();
 
     await db.cardCharges.update(id, { deletedAt: now, updatedAt: now });
-    await enqueue('delete', 'cardCharges', id, { deletedAt: now.toISOString() });
+    await enqueue('delete', 'cardCharges', id, { deletedAt: now.toISOString(), updatedAt: now.toISOString() });
 
     set(state => ({
       charges: state.charges.filter(c => c.id !== id),

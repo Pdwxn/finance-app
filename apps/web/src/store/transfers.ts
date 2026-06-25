@@ -95,7 +95,7 @@ export const useTransfersStore = create<TransfersState>((set) => ({
       deletedAt: null,
     });
 
-    await enqueue('create', 'transfers', id, { ...data, userId });
+    await enqueue('create', 'transfers', id, { ...data, userId, updatedAt: now.toISOString() });
 
     const transfer = toTransfer({
       id,
@@ -118,7 +118,7 @@ export const useTransfersStore = create<TransfersState>((set) => ({
     const updateData: Record<string, unknown> = { ...data, updatedAt: now };
 
     await db.transfers.update(id, updateData);
-    await enqueue('update', 'transfers', id, data);
+    await enqueue('update', 'transfers', id, { ...data, updatedAt: now.toISOString() });
 
     set(state => ({
       transfers: state.transfers.map(t =>
@@ -131,7 +131,7 @@ export const useTransfersStore = create<TransfersState>((set) => ({
     const now = new Date();
 
     await db.transfers.update(id, { deletedAt: now, updatedAt: now });
-    await enqueue('delete', 'transfers', id, { deletedAt: now.toISOString() });
+    await enqueue('delete', 'transfers', id, { deletedAt: now.toISOString(), updatedAt: now.toISOString() });
 
     set(state => ({
       transfers: state.transfers.filter(t => t.id !== id),
