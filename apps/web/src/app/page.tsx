@@ -21,12 +21,13 @@ import { useExpensesStore } from '@/store/expenses';
 import { useIncomesStore } from '@/store/incomes';
 import { useCategoriesStore } from '@/store/categories';
 import { useCardChargesStore } from '@/store/card-charges';
+import { useTransfersStore } from '@/store/transfers';
 import { formatCLP } from '@finance-app/utils';
 import type { Category } from '@finance-app/types';
 
 interface DashboardTransaction {
   id: string;
-  type: 'expense' | 'income';
+  type: 'expense' | 'income' | 'transfer';
   amount: number;
   description: string;
   date: string;
@@ -63,6 +64,7 @@ export default function Home() {
   const { incomes, isLoading: incomesLoading, fetchIncomes } = useIncomesStore();
   const { categories, isLoading: categoriesLoading, fetchCategories } = useCategoriesStore();
   const { charges, isLoading: chargesLoading, fetchAllCharges } = useCardChargesStore();
+  const { transfers, fetchTransfers } = useTransfersStore();
 
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [selectedTx, setSelectedTx] = useState<DashboardTransaction | null>(null);
@@ -76,7 +78,8 @@ export default function Home() {
     fetchIncomes();
     fetchCategories();
     fetchAllCharges();
-  }, [fetchAccounts, fetchExpenses, fetchIncomes, fetchCategories, fetchAllCharges]);
+    fetchTransfers();
+  }, [fetchAccounts, fetchExpenses, fetchIncomes, fetchCategories, fetchAllCharges, fetchTransfers]);
 
   const { monthStart, monthEnd, monthLabel } = useMemo(() => {
     const year = selectedDate.getFullYear();
@@ -178,10 +181,22 @@ export default function Home() {
         category: categories.find(cat => cat.id === c.categoryId),
       }));
 
-    return [...monthExpenses, ...monthIncomes, ...monthCharges]
+    const monthTransfers = transfers
+      .filter(t => t.transactionDate >= monthStart && t.transactionDate <= monthEnd)
+      .map(t => ({
+        id: t.id,
+        type: 'transfer' as const,
+        amount: t.amount,
+        description: t.description,
+        date: t.transactionDate,
+        createdAt: t.createdAt,
+        category: undefined,
+      }));
+
+    return [...monthExpenses, ...monthIncomes, ...monthCharges, ...monthTransfers]
       .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt))
       .slice(0, 5);
-  }, [expenses, incomes, charges, categories, monthStart, monthEnd]);
+  }, [expenses, incomes, charges, transfers, categories, monthStart, monthEnd]);
 
   const isStoreLoading = accountsLoading || expensesLoading || incomesLoading || categoriesLoading || chargesLoading;
 
@@ -373,19 +388,19 @@ export default function Home() {
                   className="w-full flex items-center gap-3 py-3 first:pt-0 last:pb-0 text-left hover:bg-[var(--color-surface-alt)]/50 transition-colors rounded-lg px-1 -mx-1"
                 >
                   <div className="w-10 h-10 rounded-full bg-[var(--color-surface-alt)] flex items-center justify-center text-xl shrink-0">
-                    {getCategoryEmoji(item.category?.name ?? (item.type === 'income' ? 'Ingreso' : ''))}
+                    {item.type === 'transfer' ? '🔄' : getCategoryEmoji(item.category?.name ?? (item.type === 'income' ? 'Ingreso' : ''))}
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-bold text-[var(--color-text)] truncate">{item.description}</p>
                     <p className="text-xs text-[var(--color-text-secondary)] mt-0.5 font-medium">
-                      {item.category?.name ?? (item.type === 'income' ? 'Ingreso' : 'Sin categoría')}
+                      {item.type === 'transfer' ? 'Transferencia' : item.category?.name ?? (item.type === 'income' ? 'Ingreso' : 'Sin categoría')}
                     </p>
                   </div>
                   <div className="text-right whitespace-nowrap shrink-0 ml-2">
                     <span className={`text-sm font-extrabold ${
-                      item.type === 'expense' ? 'text-rose-500' : 'text-emerald-500'
+                      item.type === 'expense' ? 'text-rose-500' : item.type === 'transfer' ? 'text-blue-500' : 'text-emerald-500'
                     }`}>
-                      {item.type === 'expense' ? '-' : '+'}{formatCLP(item.amount)}
+                      {item.type === 'expense' ? '-' : item.type === 'transfer' ? '' : '+'}{formatCLP(item.amount)}
                     </span>
                     <p className="text-[10px] text-[var(--color-text-secondary)] mt-0.5 font-semibold">
                       {new Date(item.date + 'T12:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
@@ -416,13 +431,13 @@ export default function Home() {
         {selectedTx && (
           <div className="flex flex-col items-center py-4">
             <div className="w-16 h-16 rounded-full bg-[var(--color-surface-alt)] flex items-center justify-center text-4xl shadow-inner mb-4">
-              {getCategoryEmoji(selectedTx.category?.name ?? (selectedTx.type === 'income' ? 'Ingreso' : ''))}
+              {selectedTx.type === 'transfer' ? '🔄' : getCategoryEmoji(selectedTx.category?.name ?? (selectedTx.type === 'income' ? 'Ingreso' : ''))}
             </div>
             
             <span className={`text-3xl font-extrabold tracking-tight ${
-              selectedTx.type === 'expense' ? 'text-rose-500' : 'text-emerald-500'
+              selectedTx.type === 'expense' ? 'text-rose-500' : selectedTx.type === 'transfer' ? 'text-blue-500' : 'text-emerald-500'
             }`}>
-              {selectedTx.type === 'expense' ? '-' : '+'}{formatCLP(selectedTx.amount)}
+              {selectedTx.type === 'expense' ? '-' : selectedTx.type === 'transfer' ? '' : '+'}{formatCLP(selectedTx.amount)}
             </span>
             
             <h4 className="text-lg font-bold text-[var(--color-text)] mt-1.5">{selectedTx.description}</h4>
@@ -431,7 +446,7 @@ export default function Home() {
               <div className="flex justify-between text-xs font-semibold">
                 <span className="text-[var(--color-text-secondary)]">Categoría</span>
                 <span className="text-[var(--color-text)]">
-                  {selectedTx.category?.name ?? (selectedTx.type === 'income' ? 'Ingresos' : 'Sin categoría')}
+                  {selectedTx.type === 'transfer' ? 'Transferencia' : selectedTx.category?.name ?? (selectedTx.type === 'income' ? 'Ingresos' : 'Sin categoría')}
                 </span>
               </div>
               <div className="flex justify-between text-xs font-semibold">
@@ -442,8 +457,8 @@ export default function Home() {
               </div>
               <div className="flex justify-between text-xs font-semibold">
                 <span className="text-[var(--color-text-secondary)]">Tipo</span>
-                <span className={selectedTx.type === 'expense' ? 'text-rose-500' : 'text-emerald-500'}>
-                  {selectedTx.type === 'expense' ? 'Gasto' : 'Ingreso'}
+                <span className={selectedTx.type === 'expense' ? 'text-rose-500' : selectedTx.type === 'transfer' ? 'text-blue-500' : 'text-emerald-500'}>
+                  {selectedTx.type === 'expense' ? 'Gasto' : selectedTx.type === 'transfer' ? 'Transferencia' : 'Ingreso'}
                 </span>
               </div>
             </div>

@@ -21,6 +21,7 @@ interface UnifiedItem {
   amount: number;
   description: string;
   date: string;
+  createdAt: string;
   accountId: string;
   categoryId?: string;
   fromAccountId?: string;
@@ -47,9 +48,9 @@ export default function TransactionsPage() {
 
   const unified = useMemo(() => {
     const items: UnifiedItem[] = [
-      ...expenses.map(e => ({ id: e.id, type: 'expense' as const, amount: e.amount, description: e.description, date: e.transactionDate, accountId: e.accountId, categoryId: e.categoryId })),
-      ...incomes.map(i => ({ id: i.id, type: 'income' as const, amount: i.amount, description: i.description, date: i.transactionDate, accountId: i.accountId, categoryId: i.categoryId })),
-      ...transfers.map(t => ({ id: t.id, type: 'transfer' as const, amount: t.amount, description: t.description, date: t.transactionDate, accountId: t.fromAccountId, fromAccountId: t.fromAccountId, toAccountId: t.toAccountId })),
+      ...expenses.map(e => ({ id: e.id, type: 'expense' as const, amount: e.amount, description: e.description, date: e.transactionDate, createdAt: e.createdAt, accountId: e.accountId, categoryId: e.categoryId })),
+      ...incomes.map(i => ({ id: i.id, type: 'income' as const, amount: i.amount, description: i.description, date: i.transactionDate, createdAt: i.createdAt, accountId: i.accountId, categoryId: i.categoryId })),
+      ...transfers.map(t => ({ id: t.id, type: 'transfer' as const, amount: t.amount, description: t.description, date: t.transactionDate, createdAt: t.createdAt, accountId: t.fromAccountId, fromAccountId: t.fromAccountId, toAccountId: t.toAccountId })),
     ];
 
     const now = new Date();
@@ -67,7 +68,7 @@ export default function TransactionsPage() {
       return true;
     });
 
-    return filtered.sort((a, b) => b.date.localeCompare(a.date));
+    return filtered.sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
   }, [expenses, incomes, transfers, typeFilter, periodFilter, accountFilter]);
 
   const typePills: { label: string; value: TypeFilter }[] = [
