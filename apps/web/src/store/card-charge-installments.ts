@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { db } from '@finance-app/offline';
+import { db, enqueue } from '@finance-app/offline';
 import type { CardChargeInstallment } from '@finance-app/types';
 
 function toInstallment(row: {
@@ -32,6 +32,7 @@ interface CardChargeInstallmentsState {
   error: string | null;
   fetchInstallments: (creditCardId: string) => Promise<void>;
   fetchInstallmentsByPeriod: (creditCardId: string, period: string) => Promise<CardChargeInstallment[]>;
+  deleteInstallment: (id: string) => Promise<void>;
 }
 
 export const useCardChargeInstallmentsStore = create<CardChargeInstallmentsState>((set) => ({
@@ -66,5 +67,16 @@ export const useCardChargeInstallmentsStore = create<CardChargeInstallmentsState
     } catch {
       return [];
     }
+  },
+
+  deleteInstallment: async id => {
+    const now = new Date();
+
+    await db.cardChargeInstallments.update(id, { deletedAt: now, updatedAt: now });
+    await enqueue('delete', 'cardChargeInstallments', id, { deletedAt: now.toISOString(), updatedAt: now.toISOString() });
+
+    set(state => ({
+      installments: state.installments.filter(i => i.id !== id),
+    }));
   },
 }));

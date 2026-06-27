@@ -6,6 +6,7 @@ import { ChevronLeftIcon } from '@heroicons/react/24/outline';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Sheet } from '@/components/Sheet';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { useSwipeToDelete, SwipeDeleteAction } from '@/hooks/useSwipeToDelete';
 import { useCreditCardsStore } from '@/store/credit-cards';
 import { useCardChargesStore } from '@/store/card-charges';
 import { useCardChargeInstallmentsStore } from '@/store/card-charge-installments';
@@ -25,15 +26,27 @@ import {
 
 const NOW = new Date();
 
+function SwipeableRow({ id, onDelete, children }: { id: string; onDelete: (id: string) => void; children: React.ReactNode }) {
+  useSwipeToDelete({ id, onDelete });
+  return (
+    <div className="relative overflow-hidden">
+      <SwipeDeleteAction onDelete={() => onDelete(id)} />
+      <div data-swipe-id={id}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export default function CardDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
 
   const { cards, fetchCards, deleteCard } = useCreditCardsStore();
-  const { charges, fetchCharges, createCharge } = useCardChargesStore();
-  const { installments, fetchInstallments } = useCardChargeInstallmentsStore();
-  const { payments, fetchPayments, createPayment } = useCardPaymentsStore();
+  const { charges, fetchCharges, createCharge, deleteCharge } = useCardChargesStore();
+  const { installments, fetchInstallments, deleteInstallment } = useCardChargeInstallmentsStore();
+  const { payments, fetchPayments, createPayment, deletePayment } = useCardPaymentsStore();
   const { accounts, fetchAccounts } = useAccountsStore();
   const { categories, fetchCategories } = useCategoriesStore();
   const { expenses } = useExpensesStore();
@@ -43,6 +56,7 @@ export default function CardDetailPage() {
   const [chargeOpen, setChargeOpen] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [chargeToDeleteId, setChargeToDeleteId] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [formLoading, setFormLoading] = useState(false);
 
@@ -193,6 +207,11 @@ export default function CardDetailPage() {
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentDate, setPaymentDate] = useState(NOW.toISOString().slice(0, 10));
 
+  const handleOpenPayment = useCallback(() => {
+    setPaymentAmount(String(totalDue / 100));
+    setPaymentOpen(true);
+  }, [totalDue]);
+
   const handleAddPayment = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
@@ -230,6 +249,16 @@ export default function CardDetailPage() {
   const allChargesSorted = useMemo(
     () => [...charges].sort((a, b) => b.transactionDate.localeCompare(a.transactionDate)),
     [charges],
+  );
+
+  const installmentCharges = useMemo(
+    () => charges.filter(c => c.isInstallment),
+    [charges],
+  );
+
+  const nonInstallmentChargesSorted = useMemo(
+    () => allChargesSorted.filter(c => !c.isInstallment),
+    [allChargesSorted],
   );
 
   const sortedPayments = useMemo(
@@ -328,12 +357,14 @@ export default function CardDetailPage() {
               <div key={periodLabel} className="mb-3 last:mb-0">
                 <p className="text-xs font-medium text-[var(--color-text-secondary)] mb-1">{periodLabel}</p>
                 {items.map(i => (
-                  <div key={i.id} className="flex items-center justify-between text-sm py-1">
-                    <span className="text-[var(--color-text)] truncate">
-                      Cuota {i.installmentNumber}/{charges.find(c => c.id === i.cardChargeId)?.totalInstallments ?? '?'} — {getChargeName(i.cardChargeId)}
-                    </span>
-                    <span className="text-rose-500 font-semibold ml-2 shrink-0">{formatCLP(i.amount)}</span>
-                  </div>
+                  <SwipeableRow key={i.id} id={i.id} onDelete={deleteInstallment}>
+                    <div className="flex items-center justify-between text-sm py-1 px-1">
+                      <span className="text-[var(--color-text)] truncate">
+                        Cuota {i.installmentNumber}/{charges.find(c => c.id === i.cardChargeId)?.totalInstallments ?? '?'} — {getChargeName(i.cardChargeId)}
+                      </span>
+                      <span className="text-rose-500 font-semibold ml-2 shrink-0">{formatCLP(i.amount)}</span>
+                    </div>
+                  </SwipeableRow>
                 ))}
               </div>
             ))}
@@ -346,7 +377,7 @@ export default function CardDetailPage() {
             className="flex-1 h-10 rounded-lg bg-[var(--color-primary)] text-white text-sm font-medium hover:bg-[var(--color-primary-dark)] transition-colors">
             + Cargo
           </button>
-          <button onClick={() => setPaymentOpen(true)}
+          <button onClick={handleOpenPayment}
             className="flex-1 h-10 rounded-lg bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-600 transition-colors">
             + Pago
           </button>
@@ -359,21 +390,47 @@ export default function CardDetailPage() {
         </button>
 
         {/* ── All charges ─────────────────────────────────────────────── */}
-        {allChargesSorted.length > 0 && (
+        {charges.length > 0 && (
           <div className="mb-4">
             <h3 className="text-sm font-semibold text-[var(--color-text)] mb-2">Todos los cargos</h3>
             <div className="flex flex-col gap-2">
-              {allChargesSorted.map(c => (
-                <div key={c.id} className="flex items-center justify-between rounded-xl bg-[var(--color-surface)] p-3 border border-[var(--color-border)]">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-[var(--color-text)] truncate">
-                      {c.isInstallment ? `Cuotas (${c.totalInstallments}) — ` : ''}{c.description}
-                    </p>
-                    <p className="text-xs text-[var(--color-text-secondary)]">{c.transactionDate}</p>
-                  </div>
-                  <span className="text-sm font-semibold text-rose-500 ml-2">{formatCLP(c.amount)}</span>
+              {/* Installment plan badges */}
+              {installmentCharges.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-1">
+                  {installmentCharges.map(c => (
+                    <div key={c.id} className="flex items-center gap-1.5 rounded-lg bg-[var(--color-surface-alt)] px-2.5 py-1.5 text-xs text-[var(--color-text-secondary)]">
+                      <span className="font-medium text-[var(--color-text)]">{c.totalInstallments} cuotas</span>
+                      <span>—</span>
+                      <span className="truncate max-w-[120px]">{c.description}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
+              {/* Non-installment charges */}
+              {nonInstallmentChargesSorted.length === 0 ? (
+                <p className="text-xs text-[var(--color-text-secondary)] italic">No hay cargos directos</p>
+              ) : (
+                nonInstallmentChargesSorted.map(c => (
+                  <div key={c.id} className="flex items-center justify-between rounded-xl bg-[var(--color-surface)] p-3 border border-[var(--color-border)]">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-[var(--color-text)] truncate">{c.description}</p>
+                      <p className="text-xs text-[var(--color-text-secondary)]">{c.transactionDate}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-rose-500">{formatCLP(c.amount)}</span>
+                      <button
+                        onClick={() => setChargeToDeleteId(c.id)}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--color-text-tertiary)] hover:text-[var(--color-danger)] hover:bg-[var(--color-surface-alt)] transition-colors"
+                        aria-label="Eliminar cargo"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         )}
@@ -384,15 +441,17 @@ export default function CardDetailPage() {
             <h3 className="text-sm font-semibold text-[var(--color-text)] mb-2">Pagos</h3>
             <div className="flex flex-col gap-2">
               {sortedPayments.map(p => (
-                <div key={p.id} className="flex items-center justify-between rounded-xl bg-[var(--color-surface)] p-3 border border-[var(--color-border)]">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-[var(--color-text)] truncate">
-                      Pago desde {accounts.find(a => a.id === p.accountId)?.name ?? '?'}
-                    </p>
-                    <p className="text-xs text-[var(--color-text-secondary)]">{p.paymentDate}</p>
+                <SwipeableRow key={p.id} id={p.id} onDelete={deletePayment}>
+                  <div className="flex items-center justify-between rounded-xl bg-[var(--color-surface)] p-3 border border-[var(--color-border)]">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-[var(--color-text)] truncate">
+                        Pago desde {accounts.find(a => a.id === p.accountId)?.name ?? '?'}
+                      </p>
+                      <p className="text-xs text-[var(--color-text-secondary)]">{p.paymentDate}</p>
+                    </div>
+                    <span className="text-sm font-semibold text-emerald-500 ml-2">{formatCLP(p.amount)}</span>
                   </div>
-                  <span className="text-sm font-semibold text-emerald-500 ml-2">{formatCLP(p.amount)}</span>
-                </div>
+                </SwipeableRow>
               ))}
             </div>
           </div>
@@ -449,9 +508,17 @@ export default function CardDetailPage() {
               )}
 
               {previewInstallment !== null && (
-                <p className="text-sm text-[var(--color-primary)] font-medium">
-                  Cuota aprox: {formatCLP(previewInstallment)}
-                </p>
+                <div className="text-sm text-[var(--color-primary)] font-medium space-y-0.5">
+                  <p>{chargeTotalInstallments} cuotas de {formatCLP(previewInstallment)}</p>
+                  <p>
+                    Total: {formatCLP(previewInstallment * chargeTotalInstallments)}
+                    {chargeWithInterest && card?.interestRate && previewInstallment * chargeTotalInstallments > chargeAmountCents && (
+                      <span className="text-rose-500">
+                        {' '}(+{formatCLP(previewInstallment * chargeTotalInstallments - chargeAmountCents)} interés)
+                      </span>
+                    )}
+                  </p>
+                </div>
               )}
             </>
           )}
@@ -506,7 +573,21 @@ export default function CardDetailPage() {
         </form>
       </Sheet>
 
-      {/* ── Confirm Delete ─────────────────────────────────────────────────── */}
+      {/* ── Confirm Delete charge ──────────────────────────────────────────── */}
+      <ConfirmDialog
+        open={chargeToDeleteId !== null}
+        title="Eliminar cargo"
+        message={`¿Estás seguro de eliminar este cargo?`}
+        onConfirm={async () => {
+          if (chargeToDeleteId) {
+            await deleteCharge(chargeToDeleteId);
+            setChargeToDeleteId(null);
+          }
+        }}
+        onCancel={() => setChargeToDeleteId(null)}
+      />
+
+      {/* ── Confirm Delete card ─────────────────────────────────────────────── */}
       <ConfirmDialog
         open={deleteOpen}
         title="Eliminar tarjeta"
