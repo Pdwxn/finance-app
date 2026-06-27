@@ -122,6 +122,20 @@ export const cardChargeSchema = z.object({
   transactionDate: z
     .string()
     .regex(dateRegex, { message: 'La fecha de transacción debe tener formato YYYY-MM-DD' }),
+  isInstallment: z.boolean().default(false),
+  totalInstallments: z.number().int().min(2).max(48).nullable().default(null),
+  installmentAmount: z.number().int().positive().nullable().default(null),
+  interestRate: z.number().positive().nullable().default(null),
+});
+
+// 7b. Schema para Cuotas de Cargo (cardChargeInstallmentSchema)
+export const cardChargeInstallmentSchema = z.object({
+  id: z.string().uuid({ message: 'ID de la cuota debe ser un UUID válido' }),
+  cardChargeId: z.string().uuid({ message: 'ID del cargo debe ser un UUID válido' }),
+  creditCardId: z.string().uuid({ message: 'ID de tarjeta debe ser un UUID válido' }),
+  installmentNumber: z.number().int().min(1),
+  amount: z.number().int().positive(),
+  duePeriod: z.string().regex(/^\d{4}-\d{2}$/, { message: 'Formato YYYY-MM' }),
 });
 
 // 8. Schema para Pagos de Tarjeta (cardPaymentSchema)
@@ -136,6 +150,17 @@ export const cardPaymentSchema = z.object({
   paymentDate: z
     .string()
     .regex(dateRegex, { message: 'La fecha de pago debe tener formato YYYY-MM-DD' }),
+});
+
+// 8b. Schema para Tarjetas de Crédito (creditCardSchema)
+export const creditCardSchema = z.object({
+  id: z.string().uuid({ message: 'ID de tarjeta debe ser un UUID válido' }),
+  name: z.string().min(1, { message: 'El nombre es obligatorio' }),
+  limitAmount: z.number().int({ message: 'El límite debe ser un entero (centavos)' }),
+  closingDay: z.number().int().min(1).max(31),
+  dueDay: z.number().int().min(1).max(31),
+  monthlyFee: z.number().int().nullable().default(null),
+  interestRate: z.number().positive().nullable().default(null),
 });
 
 // 9. Schema para Deudas (debtSchema)

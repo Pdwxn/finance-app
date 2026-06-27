@@ -7,6 +7,7 @@ import { incomes } from '../../db/schema/incomes';
 import { transfers } from '../../db/schema/transfers';
 import { creditCards } from '../../db/schema/credit-cards';
 import { cardCharges } from '../../db/schema/card-charges';
+import { cardChargeInstallments } from '../../db/schema/card-charge-installments';
 import { cardPayments } from '../../db/schema/card-payments';
 import { debts } from '../../db/schema/debts';
 import { debtPayments } from '../../db/schema/debt-payments';
@@ -31,6 +32,7 @@ const tables: Record<string, unknown> = {
   transfers,
   creditCards,
   cardCharges,
+  cardChargeInstallments,
   cardPayments,
   debts,
   debtPayments,

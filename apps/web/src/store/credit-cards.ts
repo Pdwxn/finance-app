@@ -11,6 +11,8 @@ function toCard(row: {
   limitAmount: number;
   closingDay: number;
   dueDay: number;
+  monthlyFee: number | null;
+  interestRate: string | null;
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
@@ -22,10 +24,21 @@ function toCard(row: {
     limitAmount: row.limitAmount,
     closingDay: row.closingDay,
     dueDay: row.dueDay,
+    monthlyFee: row.monthlyFee,
+    interestRate: row.interestRate ? Number(row.interestRate) : null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
     deletedAt: row.deletedAt?.toISOString() ?? null,
   };
+}
+
+interface CreateCardData {
+  name: string;
+  limitAmount: number;
+  closingDay: number;
+  dueDay: number;
+  monthlyFee?: number | null;
+  interestRate?: number | null;
 }
 
 interface CreditCardsState {
@@ -33,15 +46,10 @@ interface CreditCardsState {
   isLoading: boolean;
   error: string | null;
   fetchCards: () => Promise<void>;
-  createCard: (data: {
-    name: string;
-    limitAmount: number;
-    closingDay: number;
-    dueDay: number;
-  }) => Promise<void>;
+  createCard: (data: CreateCardData) => Promise<void>;
   updateCard: (
     id: string,
-    data: Partial<Pick<CreditCard, 'name' | 'limitAmount' | 'closingDay' | 'dueDay'>>
+    data: Partial<CreditCard>
   ) => Promise<void>;
   deleteCard: (id: string) => Promise<void>;
 }
@@ -79,35 +87,32 @@ export const useCreditCardsStore = create<CreditCardsState>((set) => ({
     const now = new Date();
     const id = generateUUID();
 
-    await db.creditCards.add({
+    const row = {
       id, userId,
       name: data.name,
       limitAmount: data.limitAmount,
       closingDay: data.closingDay,
       dueDay: data.dueDay,
+      monthlyFee: data.monthlyFee ?? null,
+      interestRate: data.interestRate !== undefined && data.interestRate !== null ? String(data.interestRate) : null,
       createdAt: now, updatedAt: now, deletedAt: null,
-    });
+    };
 
-    await enqueue('create', 'creditCards', id, { ...data, userId });
+    await db.creditCards.add(row);
+    await enqueue('create', 'creditCards', id, { ...row, userId });
 
-    const card = toCard({
-      id, userId,
-      name: data.name,
-      limitAmount: data.limitAmount,
-      closingDay: data.closingDay,
-      dueDay: data.dueDay,
-      createdAt: now, updatedAt: now, deletedAt: null,
-    });
-
-    set(state => ({ cards: [...state.cards, card] }));
+    set(state => ({ cards: [...state.cards, toCard(row)] }));
   },
 
   updateCard: async (id, data) => {
     const now = new Date();
-    const updateData: Record<string, unknown> = { ...data, updatedAt: now };
+    const dbData: Record<string, unknown> = { ...data, updatedAt: now };
+    if (data.interestRate !== undefined) {
+      dbData.interestRate = data.interestRate !== null ? String(data.interestRate) : null;
+    }
 
-    await db.creditCards.update(id, updateData);
-    await enqueue('update', 'creditCards', id, data);
+    await db.creditCards.update(id, dbData);
+    await enqueue('update', 'creditCards', id, dbData);
 
     set(state => ({
       cards: state.cards.map(c =>

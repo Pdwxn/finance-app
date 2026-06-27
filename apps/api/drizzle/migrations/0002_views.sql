@@ -30,11 +30,37 @@ SELECT
   cc.user_id,
   cc.name,
   cc.limit_amount,
-  COALESCE((SELECT SUM(ch.amount) FROM card_charges ch WHERE ch.credit_card_id = cc.id AND ch.deleted_at IS NULL), 0)
-    - COALESCE((SELECT SUM(cp.amount) FROM card_payments cp WHERE cp.credit_card_id = cc.id AND cp.deleted_at IS NULL), 0)
+  COALESCE((
+    SELECT SUM(ch.amount)
+    FROM card_charges ch
+    WHERE ch.credit_card_id = cc.id
+      AND ch.deleted_at IS NULL
+      AND ch.is_installment = false
+  ), 0)
+  + COALESCE((
+    SELECT SUM(ci.amount)
+    FROM card_charge_installments ci
+    WHERE ci.credit_card_id = cc.id
+      AND ci.deleted_at IS NULL
+      AND ci.due_period <= to_char(CURRENT_DATE, 'YYYY-MM')
+  ), 0)
+  - COALESCE((SELECT SUM(cp.amount) FROM card_payments cp WHERE cp.credit_card_id = cc.id AND cp.deleted_at IS NULL), 0)
   AS current_balance,
   cc.limit_amount
-    - COALESCE((SELECT SUM(ch.amount) FROM card_charges ch WHERE ch.credit_card_id = cc.id AND ch.deleted_at IS NULL), 0)
+    - COALESCE((
+      SELECT SUM(ch.amount)
+      FROM card_charges ch
+      WHERE ch.credit_card_id = cc.id
+        AND ch.deleted_at IS NULL
+        AND ch.is_installment = false
+    ), 0)
+    - COALESCE((
+      SELECT SUM(ci.amount)
+      FROM card_charge_installments ci
+      WHERE ci.credit_card_id = cc.id
+        AND ci.deleted_at IS NULL
+        AND ci.due_period <= to_char(CURRENT_DATE, 'YYYY-MM')
+    ), 0)
     + COALESCE((SELECT SUM(cp.amount) FROM card_payments cp WHERE cp.credit_card_id = cc.id AND cp.deleted_at IS NULL), 0)
   AS available_credit
 FROM credit_cards cc

@@ -18,6 +18,8 @@ export default function CreditCardsPage() {
   const [limitAmount, setLimitAmount] = useState('');
   const [closingDay, setClosingDay] = useState('');
   const [dueDay, setDueDay] = useState('');
+  const [monthlyFee, setMonthlyFee] = useState('');
+  const [interestRate, setInterestRate] = useState('');
   const [formLoading, setFormLoading] = useState(false);
 
   useEffect(() => { fetchCards(); }, [fetchCards]);
@@ -30,14 +32,26 @@ export default function CreditCardsPage() {
     const due = Number.parseInt(dueDay);
     if (Number.isNaN(closing) || Number.isNaN(due)) return;
 
+    const parsedFee = monthlyFee ? Math.round(Number.parseFloat(monthlyFee) * 100) : null;
+    const parsedRate = interestRate ? Number.parseFloat(interestRate) : null;
+
     setFormLoading(true);
-    await createCard({ name, limitAmount: amount, closingDay: closing, dueDay: due });
+    await createCard({
+      name,
+      limitAmount: amount,
+      closingDay: closing,
+      dueDay: due,
+      monthlyFee: parsedFee,
+      interestRate: parsedRate,
+    });
     setFormLoading(false);
     setCreateOpen(false);
     setName('');
     setLimitAmount('');
     setClosingDay('');
     setDueDay('');
+    setMonthlyFee('');
+    setInterestRate('');
   };
 
   return (
@@ -105,6 +119,18 @@ export default function CreditCardsPage() {
                 className="w-full h-11 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-[var(--color-text)] outline-none focus:border-[var(--color-primary)]"
                 placeholder="10" min="1" max="31" />
             </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Comisión mensual ($)</label>
+            <input type="number" inputMode="decimal" value={monthlyFee} onChange={e => setMonthlyFee(e.target.value)}
+              className="w-full h-11 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-[var(--color-text)] outline-none focus:border-[var(--color-primary)]"
+              placeholder="5000" min="0" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Interés mensual (%)</label>
+            <input type="number" inputMode="decimal" value={interestRate} onChange={e => setInterestRate(e.target.value)}
+              className="w-full h-11 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-[var(--color-text)] outline-none focus:border-[var(--color-primary)]"
+              placeholder="2.5" min="0" step="0.01" />
           </div>
           <button type="submit" disabled={formLoading}
             className="w-full h-11 rounded-lg bg-[var(--color-primary)] text-white font-medium hover:bg-[var(--color-primary-dark)] disabled:opacity-50 transition-colors">

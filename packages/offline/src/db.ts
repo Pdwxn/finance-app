@@ -70,6 +70,8 @@ interface CreditCard {
   limitAmount: number;
   closingDay: number;
   dueDay: number;
+  monthlyFee: number | null;
+  interestRate: string | null;
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
@@ -82,6 +84,22 @@ interface CardCharge {
   amount: number;
   description: string;
   transactionDate: string;
+  isInstallment: boolean;
+  totalInstallments: number | null;
+  installmentAmount: number | null;
+  interestRate: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt: Date | null;
+}
+
+interface CardChargeInstallment {
+  id: string;
+  cardChargeId: string;
+  creditCardId: string;
+  installmentNumber: number;
+  amount: number;
+  duePeriod: string;
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
@@ -186,6 +204,7 @@ export type {
   Transfer,
   CreditCard,
   CardCharge,
+  CardChargeInstallment,
   CardPayment,
   Debt,
   DebtPayment,
@@ -204,6 +223,7 @@ class FinanceDB extends Dexie {
   transfers!: EntityTable<Transfer, 'id'>;
   creditCards!: EntityTable<CreditCard, 'id'>;
   cardCharges!: EntityTable<CardCharge, 'id'>;
+  cardChargeInstallments!: EntityTable<CardChargeInstallment, 'id'>;
   cardPayments!: EntityTable<CardPayment, 'id'>;
   debts!: EntityTable<Debt, 'id'>;
   debtPayments!: EntityTable<DebtPayment, 'id'>;
@@ -216,7 +236,7 @@ class FinanceDB extends Dexie {
   constructor() {
     super('numa');
 
-    this.version(2).stores({
+    this.version(3).stores({
       accounts: '&id, userId, [userId+createdAt]',
       categories: '&id, userId, [userId+createdAt]',
       expenses: '&id, userId, accountId, categoryId, [userId+createdAt], [userId+transactionDate]',
@@ -224,6 +244,7 @@ class FinanceDB extends Dexie {
       transfers: '&id, userId, fromAccountId, toAccountId, [userId+createdAt], [userId+transactionDate]',
       creditCards: '&id, userId, [userId+createdAt]',
       cardCharges: '&id, creditCardId, categoryId, [creditCardId+createdAt]',
+      cardChargeInstallments: '&id, cardChargeId, creditCardId, duePeriod, [creditCardId+duePeriod]',
       cardPayments: '&id, creditCardId, accountId, [creditCardId+createdAt]',
       debts: '&id, userId, [userId+createdAt]',
       debtPayments: '&id, debtId, accountId, [debtId+createdAt]',

@@ -61,24 +61,38 @@ export interface Transfer extends BaseEntity {
 export interface CreditCard extends BaseEntity {
   userId: string;
   name: string;
-  limitAmount: number; // Monto en centavos
-  closingDay: number; // Día del mes (1-31)
-  dueDay: number; // Día del mes (1-31)
+  limitAmount: number;
+  closingDay: number;
+  dueDay: number;
+  monthlyFee: number | null;
+  interestRate: number | null;
 }
 
 export interface CardCharge extends BaseEntity {
   creditCardId: string;
   categoryId: string;
-  amount: number; // Monto en centavos
+  amount: number;
   description: string;
-  transactionDate: string; // Formato YYYY-MM-DD
+  transactionDate: string;
+  isInstallment: boolean;
+  totalInstallments: number | null;
+  installmentAmount: number | null;
+  interestRate: number | null;
+}
+
+export interface CardChargeInstallment extends BaseEntity {
+  cardChargeId: string;
+  creditCardId: string;
+  installmentNumber: number;
+  amount: number;
+  duePeriod: string;
 }
 
 export interface CardPayment extends BaseEntity {
   creditCardId: string;
   accountId: string;
-  amount: number; // Monto en centavos
-  paymentDate: string; // Formato YYYY-MM-DD
+  amount: number;
+  paymentDate: string;
 }
 
 export interface Debt extends BaseEntity {

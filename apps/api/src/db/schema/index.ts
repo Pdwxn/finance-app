@@ -6,6 +6,7 @@ export { incomes } from './incomes';
 export { transfers } from './transfers';
 export { creditCards } from './credit-cards';
 export { cardCharges } from './card-charges';
+export { cardChargeInstallments } from './card-charge-installments';
 export { cardPayments } from './card-payments';
 export { debts } from './debts';
 export { debtPayments } from './debt-payments';

@@ -31,7 +31,12 @@ export async function create(req: Request, res: Response) {
     return;
   }
   try {
-    const card = await creditCardsService.create({ ...parsed.data, userId });
+    const data = {
+      ...parsed.data,
+      userId,
+      interestRate: parsed.data.interestRate !== null ? String(parsed.data.interestRate) : null,
+    };
+    const card = await creditCardsService.create(data);
     res.status(201).json({ success: true, data: card });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Error interno';
@@ -52,7 +57,12 @@ export async function update(req: Request, res: Response) {
     return;
   }
   try {
-    const card = await creditCardsService.update(id, userId, parsed.data);
+    const data = {
+      ...parsed.data,
+      interestRate: parsed.data.interestRate !== null && parsed.data.interestRate !== undefined
+        ? String(parsed.data.interestRate) : parsed.data.interestRate,
+    };
+    const card = await creditCardsService.update(id, userId, data);
     res.json({ success: true, data: card });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Error interno';
