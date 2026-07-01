@@ -196,6 +196,17 @@ interface InvestmentTransaction {
   deletedAt: Date | null;
 }
 
+interface Budget {
+  id: string;
+  userId: string;
+  categoryId: string;
+  period: string;
+  limitAmount: number;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt: Date | null;
+}
+
 export type {
   Account,
   Category,
@@ -212,6 +223,7 @@ export type {
   GoalContribution,
   Investment,
   InvestmentTransaction,
+  Budget,
   SyncQueueItem,
 };
 
@@ -231,12 +243,13 @@ class FinanceDB extends Dexie {
   goalContributions!: EntityTable<GoalContribution, 'id'>;
   investments!: EntityTable<Investment, 'id'>;
   investmentTransactions!: EntityTable<InvestmentTransaction, 'id'>;
+  budgets!: EntityTable<Budget, 'id'>;
   syncQueue!: EntityTable<SyncQueueItem, 'id'>;
 
   constructor() {
     super('numa');
 
-    this.version(3).stores({
+    this.version(4).stores({
       accounts: '&id, userId, [userId+createdAt]',
       categories: '&id, userId, [userId+createdAt]',
       expenses: '&id, userId, accountId, categoryId, [userId+createdAt], [userId+transactionDate]',
@@ -252,6 +265,7 @@ class FinanceDB extends Dexie {
       goalContributions: '&id, goalId, accountId, [goalId+createdAt]',
       investments: '&id, userId, [userId+createdAt]',
       investmentTransactions: '&id, investmentId, [investmentId+createdAt]',
+      budgets: '&id, userId, categoryId, period, [userId+period], [userId+categoryId+period]',
       syncQueue: '&id, status, entity, createdAt, [status+createdAt]',
     });
   }

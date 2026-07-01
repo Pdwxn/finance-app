@@ -141,3 +141,10 @@ export interface InvestmentTransaction extends BaseEntity {
   price: number; // Precio unitario en centavos
   transactionDate: string; // Formato YYYY-MM-DD
 }
+
+export interface Budget extends BaseEntity {
+  userId: string;
+  categoryId: string;
+  period: string; // Formato YYYY-MM
+  limitAmount: number; // Monto en centavos
+}

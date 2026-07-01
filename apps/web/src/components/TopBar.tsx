@@ -11,6 +11,7 @@ const ROUTE_TITLES: Record<string, string> = {
   '/debts': 'Deudas',
   '/goals': 'Metas',
   '/investments': 'Inversiones',
+  '/budgets': 'Presupuestos',
   '/categories': 'Categorías',
   '/transactions': 'Transacciones',
   '/reports': 'Reportes',
@@ -68,7 +69,7 @@ export function TopBar() {
           <ChevronLeftIcon className="w-5 h-5" />
         </button>
       )}
-      <h1 className="text-base font-semibold text-[var(--color-text)] flex-1 truncate">{title}</h1>
+      <h1 suppressHydrationWarning className="text-base font-semibold text-[var(--color-text)] flex-1 truncate">{title}</h1>
       <button
         onClick={toggle}
         className="flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-alt)] transition-colors"

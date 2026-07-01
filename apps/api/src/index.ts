@@ -16,6 +16,7 @@ import goalsRouter from './modules/goals/goals.router';
 import goalContributionsRouter from './modules/goal-contributions/goal-contributions.router';
 import investmentsRouter from './modules/investments/investments.router';
 import investmentTransactionsRouter from './modules/investment-transactions/investment-transactions.router';
+import budgetsRouter from './modules/budgets/budgets.router';
 import syncRouter from './modules/sync/sync.router';
 
 const app = express();
@@ -42,6 +43,7 @@ app.use('/api/goals', goalsRouter);
 app.use('/api/goal-contributions', goalContributionsRouter);
 app.use('/api/investments', investmentsRouter);
 app.use('/api/investment-transactions', investmentTransactionsRouter);
+app.use('/api/budgets', budgetsRouter);
 app.use('/api/sync', syncRouter);
 
 app.listen(env.PORT, () => {

@@ -15,6 +15,7 @@ import { goals } from '../../db/schema/goals';
 import { goalContributions } from '../../db/schema/goal-contributions';
 import { investments } from '../../db/schema/investments';
 import { investmentTransactions } from '../../db/schema/investment-transactions';
+import { budgets } from '../../db/schema/budgets';
 
 interface SyncResult {
   queueId: string;
@@ -40,6 +41,7 @@ const tables: Record<string, unknown> = {
   goalContributions,
   investments,
   investmentTransactions,
+  budgets,
 };
 
 function findById(table: unknown, id: string): Promise<Record<string, unknown>[]> {

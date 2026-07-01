@@ -234,7 +234,35 @@ export const investmentSchema = z.object({
     .positive({ message: 'El costo promedio debe ser mayor a cero' }),
 });
 
-// 14. Schema para Transacciones de Inversión (investmentTransactionSchema)
+// 14b. Schema para Presupuestos (budgetSchema)
+const periodRegex = /^\d{4}-\d{2}$/;
+
+export const budgetSchema = z.object({
+  id: z.string().uuid({ message: 'ID del presupuesto debe ser un UUID válido' }),
+  categoryId: z.string().uuid({ message: 'ID de categoría debe ser un UUID válido' }),
+  period: z
+    .string()
+    .regex(periodRegex, { message: 'El período debe tener formato YYYY-MM' }),
+  limitAmount: z
+    .number()
+    .int({ message: 'El monto límite debe ser un entero (centavos)' })
+    .positive({ message: 'El monto límite debe ser mayor a cero' }),
+});
+
+export const updateBudgetSchema = z.object({
+  categoryId: z.string().uuid({ message: 'ID de categoría debe ser un UUID válido' }).optional(),
+  period: z
+    .string()
+    .regex(periodRegex, { message: 'El período debe tener formato YYYY-MM' })
+    .optional(),
+  limitAmount: z
+    .number()
+    .int({ message: 'El monto límite debe ser un entero (centavos)' })
+    .positive({ message: 'El monto límite debe ser mayor a cero' })
+    .optional(),
+});
+
+// 15. Schema para Transacciones de Inversión (investmentTransactionSchema)
 export const investmentTransactionSchema = z.object({
   id: z.string().uuid({ message: 'ID de la transacción debe ser un UUID válido' }),
   investmentId: z.string().uuid({ message: 'ID de inversión debe ser un UUID válido' }),

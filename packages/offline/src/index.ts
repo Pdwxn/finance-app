@@ -1,19 +1,9 @@
 export { db } from './db';
 export type {
-  Account,
-  Category,
-  Expense,
-  Income,
-  Transfer,
-  CreditCard,
-  CardCharge,
-  CardPayment,
-  Debt,
-  DebtPayment,
-  Goal,
-  GoalContribution,
-  Investment,
-  InvestmentTransaction,
+  Account, Category, Expense, Income, Transfer,
+  CreditCard, CardCharge, CardPayment, Debt, DebtPayment,
+  Goal, GoalContribution, Investment, InvestmentTransaction,
+  Budget,
   SyncQueueItem,
 } from './db';
 

@@ -22,7 +22,8 @@ import { useIncomesStore } from '@/store/incomes';
 import { useCategoriesStore } from '@/store/categories';
 import { useCardChargesStore } from '@/store/card-charges';
 import { useTransfersStore } from '@/store/transfers';
-import { formatCLP } from '@finance-app/utils';
+import { useBudgetsStore } from '@/store/budgets';
+import { formatCLP, getPeriodYYYYMM } from '@finance-app/utils';
 import type { Category } from '@finance-app/types';
 
 interface DashboardTransaction {
@@ -65,6 +66,7 @@ export default function Home() {
   const { categories, isLoading: categoriesLoading, fetchCategories } = useCategoriesStore();
   const { charges, isLoading: chargesLoading, fetchAllCharges } = useCardChargesStore();
   const { transfers, fetchTransfers } = useTransfersStore();
+  const { budgets, fetchBudgets } = useBudgetsStore();
 
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [selectedTx, setSelectedTx] = useState<DashboardTransaction | null>(null);
@@ -79,7 +81,8 @@ export default function Home() {
     fetchCategories();
     fetchAllCharges();
     fetchTransfers();
-  }, [fetchAccounts, fetchExpenses, fetchIncomes, fetchCategories, fetchAllCharges, fetchTransfers]);
+    fetchBudgets();
+  }, [fetchAccounts, fetchExpenses, fetchIncomes, fetchCategories, fetchAllCharges, fetchTransfers, fetchBudgets]);
 
   const { monthStart, monthEnd, monthLabel } = useMemo(() => {
     const year = selectedDate.getFullYear();
@@ -116,6 +119,26 @@ export default function Home() {
     const expenseSum = expenses.reduce((sum, e) => sum + e.amount, 0);
     return initialSum + incomeSum - expenseSum;
   }, [accounts, incomes, expenses]);
+
+  const currentPeriod = useMemo(() => getPeriodYYYYMM(selectedDate), [selectedDate]);
+
+  const budgetsAtRisk = useMemo(() => {
+    return budgets
+      .filter(b => b.period === currentPeriod)
+      .map(b => {
+        const spent = expenses
+          .filter(e => e.categoryId === b.categoryId && e.transactionDate.startsWith(currentPeriod))
+          .reduce((s, e) => s + e.amount, 0)
+          + charges
+            .filter(c => c.categoryId === b.categoryId && c.transactionDate.startsWith(currentPeriod))
+            .reduce((s, c) => s + c.amount, 0);
+        const usagePct = b.limitAmount > 0 ? Math.round((spent / b.limitAmount) * 100) : 0;
+        return { ...b, spent, usagePct, category: categories.find(c => c.id === b.categoryId) };
+      })
+      .filter(b => b.usagePct >= 75)
+      .sort((a, b) => b.usagePct - a.usagePct)
+      .slice(0, 3);
+  }, [budgets, expenses, charges, categories, currentPeriod]);
 
   const monthlyIncome = useMemo(() => {
     return incomes
@@ -365,6 +388,40 @@ export default function Home() {
             </div>
           )}
         </div>
+
+        {/* Presupuestos */}
+        {budgetsAtRisk.length > 0 && (
+          <div className="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] p-5 shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-[var(--color-text)]">Presupuestos</h3>
+              <Link href="/budgets" className="text-xs font-bold text-[var(--color-primary)] hover:underline">
+                Ver todos
+              </Link>
+            </div>
+            {budgetsAtRisk.map(b => {
+              const isOver = b.spent > b.limitAmount;
+              const isWarning = b.usagePct >= 75 && !isOver;
+              const barColor = isOver ? 'var(--color-danger)' : isWarning ? '#eab308' : '#22c55e';
+              return (
+                <Link key={b.id} href={`/budgets/${b.id}`}
+                  className="block rounded-xl bg-[var(--color-surface-alt)] p-3 border border-[var(--color-border)] hover:bg-[var(--color-surface)] transition-colors">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-sm">{b.category?.icon ?? '📁'}</span>
+                      <span className="text-xs font-semibold text-[var(--color-text)] truncate">{b.category?.name ?? '?'}</span>
+                    </div>
+                    <span className={`text-xs font-bold ${isOver ? 'text-[var(--color-danger)]' : 'text-[var(--color-text-secondary)]'}`}>
+                      {formatCLP(b.spent)} / {formatCLP(b.limitAmount)}
+                    </span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-[var(--color-surface)] overflow-hidden">
+                    <div className="h-full rounded-full transition-all" style={{ width: `${b.usagePct}%`, backgroundColor: barColor }} />
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
 
         {/* Últimos Movimientos */}
         <div className="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] p-5 shadow-sm space-y-4">

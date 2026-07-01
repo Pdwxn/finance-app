@@ -2,10 +2,11 @@
 
 import Link from 'next/link';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
-import { DocumentTextIcon, CreditCardIcon, ExclamationTriangleIcon, BoltIcon, ArrowTrendingUpIcon, TagIcon } from '@heroicons/react/24/outline';
+import { DocumentTextIcon, CreditCardIcon, ExclamationTriangleIcon, BoltIcon, ArrowTrendingUpIcon, CurrencyDollarIcon, TagIcon } from '@heroicons/react/24/outline';
 
 const sections = [
   { label: 'Reportes', href: '/reports', icon: DocumentTextIcon },
+  { label: 'Presupuestos', href: '/budgets', icon: CurrencyDollarIcon },
   { label: 'Tarjetas de crédito', href: '/credit-cards', icon: CreditCardIcon },
   { label: 'Deudas', href: '/debts', icon: ExclamationTriangleIcon },
   { label: 'Metas', href: '/goals', icon: BoltIcon },
