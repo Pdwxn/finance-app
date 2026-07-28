@@ -8,7 +8,9 @@ import { useIncomesStore } from '@/store/incomes';
 import { useCategoriesStore } from '@/store/categories';
 import { useAccountsStore } from '@/store/accounts';
 import { useDebtsStore } from '@/store/debts';
+import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import { formatCurrency, getCurrencySymbol } from '@finance-app/utils';
+import { useExportReports } from '@/hooks/useExportReports';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, Cell,
   type TooltipContentProps,
@@ -37,6 +39,7 @@ export default function ReportsPage() {
   const { debts, fetchDebts } = useDebtsStore();
 
   const [loading, setLoading] = useState(true);
+  const { exportReport, isExporting } = useExportReports();
 
   const currency = accounts[0]?.currency ?? 'CLP';
   const currencySymbol = getCurrencySymbol(currency);
@@ -130,7 +133,26 @@ export default function ReportsPage() {
   return (
     <ProtectedRoute>
       <div className="p-4 pb-24 space-y-6">
-        <h2 className="text-xl font-semibold text-[var(--color-text)]">Reportes</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold text-[var(--color-text)]">Reportes</h2>
+          <button
+            onClick={() =>
+              exportReport({
+                cashflowData,
+                spendingByCategory,
+                totalIncome,
+                totalExpense,
+                netWorth,
+                currency,
+              })
+            }
+            disabled={isExporting}
+            className="flex items-center gap-2 rounded-lg bg-[var(--color-primary)] px-3 py-2 text-sm font-medium text-white transition-opacity disabled:opacity-50"
+          >
+            <ArrowDownTrayIcon className="h-4 w-4" />
+            {isExporting ? 'Exportando...' : 'Exportar'}
+          </button>
+        </div>
 
         <div className="rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] p-4">
           <h3 className="text-sm font-semibold text-[var(--color-text)] mb-1">Patrimonio neto</h3>
