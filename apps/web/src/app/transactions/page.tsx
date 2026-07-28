@@ -10,6 +10,7 @@ import { useExpensesStore } from '@/store/expenses';
 import { useIncomesStore } from '@/store/incomes';
 import { useTransfersStore } from '@/store/transfers';
 import { useAccountsStore } from '@/store/accounts';
+import { useCategoriesStore } from '@/store/categories';
 import { formatCurrency } from '@finance-app/utils';
 
 type TypeFilter = 'all' | 'expense' | 'income' | 'transfer';
@@ -33,18 +34,32 @@ export default function TransactionsPage() {
   const { incomes, isLoading: loadingIncomes, fetchIncomes } = useIncomesStore();
   const { transfers, isLoading: loadingTransfers, fetchTransfers } = useTransfersStore();
   const { accounts, fetchAccounts } = useAccountsStore();
+  const { categories, fetchCategories } = useCategoriesStore();
 
   const [transactionSheetOpen, setTransactionSheetOpen] = useState(false);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('month');
   const [accountFilter, setAccountFilter] = useState<string>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
   useEffect(() => {
     fetchExpenses();
     fetchIncomes();
     fetchTransfers();
     fetchAccounts();
-  }, [fetchExpenses, fetchIncomes, fetchTransfers, fetchAccounts]);
+    fetchCategories();
+  }, [fetchExpenses, fetchIncomes, fetchTransfers, fetchAccounts, fetchCategories]);
+
+  useEffect(() => {
+    setCategoryFilter('all');
+  }, [typeFilter]);
+
+  const filteredCategories = useMemo(() => {
+    if (typeFilter === 'transfer') return [];
+    if (typeFilter === 'expense') return categories.filter(c => c.type === 'expense');
+    if (typeFilter === 'income') return categories.filter(c => c.type === 'income');
+    return categories;
+  }, [categories, typeFilter]);
 
   const unified = useMemo(() => {
     const items: UnifiedItem[] = [
@@ -57,6 +72,7 @@ export default function TransactionsPage() {
     const filtered = items.filter(item => {
       if (typeFilter !== 'all' && item.type !== typeFilter) return false;
       if (accountFilter !== 'all' && item.accountId !== accountFilter && item.fromAccountId !== accountFilter && item.toAccountId !== accountFilter) return false;
+      if (categoryFilter !== 'all' && item.categoryId !== categoryFilter) return false;
       if (periodFilter === 'month') {
         const d = new Date(item.date + 'T00:00:00Z');
         if (d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear()) return false;
@@ -69,7 +85,7 @@ export default function TransactionsPage() {
     });
 
     return filtered.sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
-  }, [expenses, incomes, transfers, typeFilter, periodFilter, accountFilter]);
+  }, [expenses, incomes, transfers, typeFilter, periodFilter, accountFilter, categoryFilter]);
 
   const typePills: { label: string; value: TypeFilter }[] = [
     { label: 'Todas', value: 'all' },
@@ -125,6 +141,14 @@ export default function TransactionsPage() {
           <option value="all">Todas las cuentas</option>
           {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
         </select>
+
+        {typeFilter !== 'transfer' && (
+          <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}
+            className="w-full h-9 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-xs text-[var(--color-text)] outline-none focus:border-[var(--color-primary)] mb-3">
+            <option value="all">Todas las categorías</option>
+            {filteredCategories.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
+          </select>
+        )}
 
         {isLoading ? (
           <Skeleton className="h-14 w-full" count={5} />
