@@ -10,6 +10,7 @@ interface User {
 interface AuthState {
   user: User | null;
   token: string | null;
+  refreshToken: string | null;
   isLoading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
@@ -21,18 +22,21 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   token: null,
+  refreshToken: null,
   isLoading: false,
   error: null,
 
   loadFromStorage: () => {
     const token = localStorage.getItem('jwt');
+    const refreshToken = localStorage.getItem('refreshToken');
     const userRaw = localStorage.getItem('user');
-    if (token && userRaw) {
+    if (token && refreshToken && userRaw) {
       try {
         const user = JSON.parse(userRaw) as User;
-        set({ user, token });
+        set({ user, token, refreshToken });
       } catch {
         localStorage.removeItem('jwt');
+        localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
       }
     }
@@ -49,10 +53,11 @@ export const useAuthStore = create<AuthState>((set) => ({
         set({ isLoading: false, error: res.message ?? 'Error al iniciar sesión' });
         return;
       }
-      const { user, accessToken } = res.data;
+      const { user, accessToken, refreshToken } = res.data;
       localStorage.setItem('jwt', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('user', JSON.stringify(user));
-      set({ user, token: accessToken, isLoading: false, error: null });
+      set({ user, token: accessToken, refreshToken, isLoading: false, error: null });
     } catch {
       set({ isLoading: false, error: 'Error de conexión' });
     }
@@ -69,10 +74,11 @@ export const useAuthStore = create<AuthState>((set) => ({
         set({ isLoading: false, error: res.message ?? 'Error al registrarse' });
         return;
       }
-      const { user, accessToken } = res.data;
+      const { user, accessToken, refreshToken } = res.data;
       localStorage.setItem('jwt', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('user', JSON.stringify(user));
-      set({ user, token: accessToken, isLoading: false, error: null });
+      set({ user, token: accessToken, refreshToken, isLoading: false, error: null });
     } catch {
       set({ isLoading: false, error: 'Error de conexión' });
     }
@@ -80,7 +86,8 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: () => {
     localStorage.removeItem('jwt');
+    localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
-    set({ user: null, token: null, error: null });
+    set({ user: null, token: null, refreshToken: null, error: null });
   },
 }));

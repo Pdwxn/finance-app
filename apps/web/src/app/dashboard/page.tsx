@@ -8,7 +8,8 @@ import {
   ArrowDownLeftIcon, 
   ArrowUpRightIcon, 
   FolderOpenIcon, 
-  PlusIcon 
+  PlusIcon,
+  SparklesIcon,
 } from '@heroicons/react/24/outline';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 
@@ -23,6 +24,7 @@ import { useCategoriesStore } from '@/store/categories';
 import { useCardChargesStore } from '@/store/card-charges';
 import { useTransfersStore } from '@/store/transfers';
 import { useBudgetsStore } from '@/store/budgets';
+import { useReportsStore } from '@/store/reports';
 import { formatCurrency, getPeriodYYYYMM } from '@finance-app/utils';
 import type { Category } from '@finance-app/types';
 
@@ -67,6 +69,7 @@ export default function Home() {
   const { charges, isLoading: chargesLoading, fetchAllCharges } = useCardChargesStore();
   const { transfers, fetchTransfers } = useTransfersStore();
   const { budgets, fetchBudgets } = useBudgetsStore();
+  const { reports: aiReports, fetchReports } = useReportsStore();
 
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [selectedTx, setSelectedTx] = useState<DashboardTransaction | null>(null);
@@ -82,7 +85,8 @@ export default function Home() {
     fetchAllCharges();
     fetchTransfers();
     fetchBudgets();
-  }, [fetchAccounts, fetchExpenses, fetchIncomes, fetchCategories, fetchAllCharges, fetchTransfers, fetchBudgets]);
+    fetchReports();
+  }, [fetchAccounts, fetchExpenses, fetchIncomes, fetchCategories, fetchAllCharges, fetchTransfers, fetchBudgets, fetchReports]);
 
   const { monthStart, monthEnd, monthLabel } = useMemo(() => {
     const year = selectedDate.getFullYear();
@@ -222,6 +226,10 @@ export default function Home() {
       .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt))
       .slice(0, 5);
   }, [expenses, incomes, charges, transfers, categories, monthStart, monthEnd]);
+
+  const latestReport = useMemo(() => {
+    return aiReports.length > 0 ? aiReports[0] : null;
+  }, [aiReports]);
 
   const isStoreLoading = accountsLoading || expensesLoading || incomesLoading || categoriesLoading || chargesLoading;
 
@@ -423,6 +431,21 @@ export default function Home() {
               );
             })}
           </div>
+        )}
+
+        {/* Resumen IA */}
+        {latestReport && (
+          <Link href={`/reports/ai/${latestReport.id}`}
+            className="block rounded-3xl bg-gradient-to-br from-violet-500 via-purple-600 to-fuchsia-700 p-5 text-white shadow-lg shadow-purple-500/10 hover:opacity-95 transition-opacity">
+            <div className="flex items-center gap-2 mb-2">
+              <SparklesIcon className="w-5 h-5" />
+              <span className="text-xs font-bold uppercase tracking-wider opacity-75">
+                Resumen {latestReport.type === 'weekly' ? 'Semanal' : 'Mensual'}
+              </span>
+            </div>
+            <p className="text-sm leading-relaxed opacity-95 line-clamp-3">{latestReport.summary}</p>
+            <span className="text-xs opacity-70 mt-2 inline-block font-medium">Ver completo →</span>
+          </Link>
         )}
 
         {/* Últimos Movimientos */}

@@ -148,3 +148,38 @@ export interface Budget extends BaseEntity {
   period: string; // Formato YYYY-MM
   limitAmount: number; // Monto en centavos
 }
+
+export type ReportType = 'weekly' | 'monthly';
+
+export interface CategorySummary {
+  categoryId: string;
+  name: string;
+  amount: number;
+  percentage: number;
+}
+
+export interface ReportMetadata {
+  totalIncome: number;
+  totalExpenses: number;
+  netBalance: number;
+  incomeByCategory: CategorySummary[];
+  expenseByCategory: CategorySummary[];
+  comparisonPrevious?: {
+    incomeChange: number;
+    expensesChange: number;
+    balanceChange: number;
+  };
+  budgetsAtRisk: Array<{ categoryId: string; name: string; used: number; limit: number }>;
+  topExpenses: Array<{ description: string; amount: number; category: string }>;
+  currency: string;
+}
+
+export interface FinancialReport extends BaseEntity {
+  userId: string;
+  type: ReportType;
+  periodStart: string;
+  periodEnd: string;
+  title: string;
+  summary: string;
+  metadata: ReportMetadata;
+}

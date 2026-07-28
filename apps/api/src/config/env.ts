@@ -9,6 +9,13 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(32, { message: 'JWT_SECRET debe tener al menos 32 caracteres' }),
   JWT_REFRESH_SECRET: z.string().min(32, { message: 'JWT_REFRESH_SECRET debe tener al menos 32 caracteres' }),
   CORS_ORIGIN: z.string().default('http://localhost:3000'),
+  GROQ_API_KEY: z.string().min(1, { message: 'GROQ_API_KEY es requerida' }),
+  GROQ_MODEL: z.string().default('gpt-oss-120b'),
+  BYPASS_AUTH: z
+    .string()
+    .optional()
+    .transform((v) => v === 'true'),
+  DEV_USER_ID: z.string().uuid().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

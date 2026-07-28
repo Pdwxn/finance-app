@@ -1,6 +1,6 @@
 {
-  "id": "c28925fd-e629-4d68-abdd-587f7fe6499a",
-  "prevId": "2da257cf-0abb-4ab0-ab8c-167e05895872",
+  "id": "6e391f6f-8d0b-4539-abbf-181f23927f38",
+  "prevId": "c28925fd-e629-4d68-abdd-587f7fe6499a",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -88,6 +88,222 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.budgets": {
+      "name": "budgets",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "category_id": {
+          "name": "category_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "period": {
+          "name": "period",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "limit_amount": {
+          "name": "limit_amount",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "idx_budgets_user_cat_period": {
+          "name": "idx_budgets_user_cat_period",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "category_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "period",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "budgets_user_id_users_id_fk": {
+          "name": "budgets_user_id_users_id_fk",
+          "tableFrom": "budgets",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "budgets_category_id_categories_id_fk": {
+          "name": "budgets_category_id_categories_id_fk",
+          "tableFrom": "budgets",
+          "tableTo": "categories",
+          "columnsFrom": [
+            "category_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.card_charge_installments": {
+      "name": "card_charge_installments",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "card_charge_id": {
+          "name": "card_charge_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "credit_card_id": {
+          "name": "credit_card_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "installment_number": {
+          "name": "installment_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "amount": {
+          "name": "amount",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "due_period": {
+          "name": "due_period",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "card_charge_installments_card_charge_id_card_charges_id_fk": {
+          "name": "card_charge_installments_card_charge_id_card_charges_id_fk",
+          "tableFrom": "card_charge_installments",
+          "tableTo": "card_charges",
+          "columnsFrom": [
+            "card_charge_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "card_charge_installments_credit_card_id_credit_cards_id_fk": {
+          "name": "card_charge_installments_credit_card_id_credit_cards_id_fk",
+          "tableFrom": "card_charge_installments",
+          "tableTo": "credit_cards",
+          "columnsFrom": [
+            "credit_card_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.card_charges": {
       "name": "card_charges",
       "schema": "",
@@ -128,6 +344,31 @@
           "type": "date",
           "primaryKey": false,
           "notNull": true
+        },
+        "is_installment": {
+          "name": "is_installment",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "total_installments": {
+          "name": "total_installments",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "installment_amount": {
+          "name": "installment_amount",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "interest_rate": {
+          "name": "interest_rate",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
         },
         "created_at": {
           "name": "created_at",
@@ -401,6 +642,18 @@
           "primaryKey": false,
           "notNull": true
         },
+        "monthly_fee": {
+          "name": "monthly_fee",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "interest_rate": {
+          "name": "interest_rate",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp",
@@ -461,6 +714,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "account_id": {
+          "name": "account_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
         "amount": {
           "name": "amount",
           "type": "bigint",
@@ -502,6 +761,19 @@
           "tableTo": "debts",
           "columnsFrom": [
             "debt_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "debt_payments_account_id_accounts_id_fk": {
+          "name": "debt_payments_account_id_accounts_id_fk",
+          "tableFrom": "debt_payments",
+          "tableTo": "accounts",
+          "columnsFrom": [
+            "account_id"
           ],
           "columnsTo": [
             "id"
@@ -702,6 +974,102 @@
           "tableTo": "categories",
           "columnsFrom": [
             "category_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.financial_reports": {
+      "name": "financial_reports",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "period_start": {
+          "name": "period_start",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "period_end": {
+          "name": "period_end",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "summary": {
+          "name": "summary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "financial_reports_user_id_users_id_fk": {
+          "name": "financial_reports_user_id_users_id_fk",
+          "tableFrom": "financial_reports",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
           ],
           "columnsTo": [
             "id"
@@ -1359,156 +1727,8 @@
   "policies": {},
   "views": {},
   "_meta": {
+    "columns": {},
     "schemas": {},
-    "tables": {
-      "accounts": "accounts",
-      "card_charges": "card_charges",
-      "card_payments": "card_payments",
-      "categories": "categories",
-      "credit_cards": "credit_cards",
-      "debt_payments": "debt_payments",
-      "debts": "debts",
-      "expenses": "expenses",
-      "goal_contributions": "goal_contributions",
-      "goals": "goals",
-      "incomes": "incomes",
-      "investment_transactions": "investment_transactions",
-      "investments": "investments",
-      "transfers": "transfers",
-      "users": "users"
-    },
-    "columns": {
-      "accounts.id": "id",
-      "accounts.user_id": "user_id",
-      "accounts.name": "name",
-      "accounts.type": "type",
-      "accounts.currency": "currency",
-      "accounts.initial_balance": "initial_balance",
-      "accounts.created_at": "created_at",
-      "accounts.updated_at": "updated_at",
-      "accounts.deleted_at": "deleted_at",
-      "card_charges.id": "id",
-      "card_charges.credit_card_id": "credit_card_id",
-      "card_charges.category_id": "category_id",
-      "card_charges.amount": "amount",
-      "card_charges.description": "description",
-      "card_charges.transaction_date": "transaction_date",
-      "card_charges.created_at": "created_at",
-      "card_charges.updated_at": "updated_at",
-      "card_charges.deleted_at": "deleted_at",
-      "card_payments.id": "id",
-      "card_payments.credit_card_id": "credit_card_id",
-      "card_payments.account_id": "account_id",
-      "card_payments.amount": "amount",
-      "card_payments.payment_date": "payment_date",
-      "card_payments.created_at": "created_at",
-      "card_payments.updated_at": "updated_at",
-      "card_payments.deleted_at": "deleted_at",
-      "categories.id": "id",
-      "categories.user_id": "user_id",
-      "categories.name": "name",
-      "categories.type": "type",
-      "categories.icon": "icon",
-      "categories.color": "color",
-      "categories.created_at": "created_at",
-      "categories.updated_at": "updated_at",
-      "categories.deleted_at": "deleted_at",
-      "credit_cards.id": "id",
-      "credit_cards.user_id": "user_id",
-      "credit_cards.name": "name",
-      "credit_cards.limit_amount": "limit_amount",
-      "credit_cards.closing_day": "closing_day",
-      "credit_cards.due_day": "due_day",
-      "credit_cards.created_at": "created_at",
-      "credit_cards.updated_at": "updated_at",
-      "credit_cards.deleted_at": "deleted_at",
-      "debt_payments.id": "id",
-      "debt_payments.debt_id": "debt_id",
-      "debt_payments.amount": "amount",
-      "debt_payments.payment_date": "payment_date",
-      "debt_payments.created_at": "created_at",
-      "debt_payments.updated_at": "updated_at",
-      "debt_payments.deleted_at": "deleted_at",
-      "debts.id": "id",
-      "debts.user_id": "user_id",
-      "debts.name": "name",
-      "debts.initial_amount": "initial_amount",
-      "debts.interest_rate": "interest_rate",
-      "debts.start_date": "start_date",
-      "debts.created_at": "created_at",
-      "debts.updated_at": "updated_at",
-      "debts.deleted_at": "deleted_at",
-      "expenses.id": "id",
-      "expenses.user_id": "user_id",
-      "expenses.account_id": "account_id",
-      "expenses.category_id": "category_id",
-      "expenses.amount": "amount",
-      "expenses.description": "description",
-      "expenses.transaction_date": "transaction_date",
-      "expenses.created_at": "created_at",
-      "expenses.updated_at": "updated_at",
-      "expenses.deleted_at": "deleted_at",
-      "goal_contributions.id": "id",
-      "goal_contributions.goal_id": "goal_id",
-      "goal_contributions.account_id": "account_id",
-      "goal_contributions.amount": "amount",
-      "goal_contributions.contribution_date": "contribution_date",
-      "goal_contributions.created_at": "created_at",
-      "goal_contributions.updated_at": "updated_at",
-      "goal_contributions.deleted_at": "deleted_at",
-      "goals.id": "id",
-      "goals.user_id": "user_id",
-      "goals.name": "name",
-      "goals.target_amount": "target_amount",
-      "goals.target_date": "target_date",
-      "goals.created_at": "created_at",
-      "goals.updated_at": "updated_at",
-      "goals.deleted_at": "deleted_at",
-      "incomes.id": "id",
-      "incomes.user_id": "user_id",
-      "incomes.account_id": "account_id",
-      "incomes.category_id": "category_id",
-      "incomes.amount": "amount",
-      "incomes.description": "description",
-      "incomes.transaction_date": "transaction_date",
-      "incomes.created_at": "created_at",
-      "incomes.updated_at": "updated_at",
-      "incomes.deleted_at": "deleted_at",
-      "investment_transactions.id": "id",
-      "investment_transactions.investment_id": "investment_id",
-      "investment_transactions.type": "type",
-      "investment_transactions.quantity": "quantity",
-      "investment_transactions.price": "price",
-      "investment_transactions.transaction_date": "transaction_date",
-      "investment_transactions.created_at": "created_at",
-      "investment_transactions.updated_at": "updated_at",
-      "investment_transactions.deleted_at": "deleted_at",
-      "investments.id": "id",
-      "investments.user_id": "user_id",
-      "investments.symbol": "symbol",
-      "investments.name": "name",
-      "investments.quantity": "quantity",
-      "investments.average_cost": "average_cost",
-      "investments.created_at": "created_at",
-      "investments.updated_at": "updated_at",
-      "investments.deleted_at": "deleted_at",
-      "transfers.id": "id",
-      "transfers.user_id": "user_id",
-      "transfers.from_account_id": "from_account_id",
-      "transfers.to_account_id": "to_account_id",
-      "transfers.amount": "amount",
-      "transfers.description": "description",
-      "transfers.transaction_date": "transaction_date",
-      "transfers.created_at": "created_at",
-      "transfers.updated_at": "updated_at",
-      "transfers.deleted_at": "deleted_at",
-      "users.id": "id",
-      "users.email": "email",
-      "users.password_hash": "password_hash",
-      "users.name": "name",
-      "users.created_at": "created_at",
-      "users.updated_at": "updated_at",
-      "users.deleted_at": "deleted_at"
-    }
+    "tables": {}
   }
 }

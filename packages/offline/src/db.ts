@@ -207,7 +207,22 @@ interface Budget {
   deletedAt: Date | null;
 }
 
+interface FinancialReport {
+  id: string;
+  userId: string;
+  type: string;
+  periodStart: string;
+  periodEnd: string;
+  title: string;
+  summary: string;
+  metadata: Record<string, unknown>;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt: Date | null;
+}
+
 export type {
+  FinancialReport,
   Account,
   Category,
   Expense,
@@ -244,12 +259,13 @@ class FinanceDB extends Dexie {
   investments!: EntityTable<Investment, 'id'>;
   investmentTransactions!: EntityTable<InvestmentTransaction, 'id'>;
   budgets!: EntityTable<Budget, 'id'>;
+  reports!: EntityTable<FinancialReport, 'id'>;
   syncQueue!: EntityTable<SyncQueueItem, 'id'>;
 
   constructor() {
     super('numa');
 
-    this.version(4).stores({
+    this.version(5).stores({
       accounts: '&id, userId, [userId+createdAt]',
       categories: '&id, userId, [userId+createdAt]',
       expenses: '&id, userId, accountId, categoryId, [userId+createdAt], [userId+transactionDate]',
@@ -266,6 +282,7 @@ class FinanceDB extends Dexie {
       investments: '&id, userId, [userId+createdAt]',
       investmentTransactions: '&id, investmentId, [investmentId+createdAt]',
       budgets: '&id, userId, categoryId, period, [userId+period], [userId+categoryId+period]',
+      reports: '&id, userId, type, [userId+type], [userId+createdAt]',
       syncQueue: '&id, status, entity, createdAt, [status+createdAt]',
     });
   }

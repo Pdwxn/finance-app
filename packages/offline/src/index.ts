@@ -4,6 +4,7 @@ export type {
   CreditCard, CardCharge, CardPayment, Debt, DebtPayment,
   Goal, GoalContribution, Investment, InvestmentTransaction,
   Budget,
+  FinancialReport,
   SyncQueueItem,
 } from './db';
 

@@ -13,6 +13,12 @@ declare global {
 }
 
 export function authenticate(req: Request, res: Response, next: NextFunction) {
+  if (env.BYPASS_AUTH && env.DEV_USER_ID) {
+    req.user = { userId: env.DEV_USER_ID, email: 'dev@localhost' };
+    next();
+    return;
+  }
+
   const header = req.headers.authorization;
   if (!header?.startsWith('Bearer ')) {
     res.status(401).json({ success: false, message: 'Token no proporcionado' });

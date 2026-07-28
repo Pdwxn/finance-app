@@ -15,3 +15,4 @@ export { goalContributions } from './goal-contributions';
 export { investments } from './investments';
 export { investmentTransactions } from './investment-transactions';
 export { budgets } from './budgets';
+export { financialReports } from './financial-reports';

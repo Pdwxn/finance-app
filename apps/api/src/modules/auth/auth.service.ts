@@ -2,12 +2,12 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { env } from '../../config/env';
 import * as authRepository from './auth.repository';
-import type { JwtPayload, AuthResponse } from './auth.types';
+import type { JwtPayload, AuthResponse, RefreshResponse } from './auth.types';
 
 const SALT_ROUNDS = 10;
 
 function generateAccessToken(payload: JwtPayload): string {
-  return jwt.sign(payload, env.JWT_SECRET, { expiresIn: '15m' });
+  return jwt.sign(payload, env.JWT_SECRET, { expiresIn: '1h' });
 }
 
 function generateRefreshToken(payload: JwtPayload): string {
@@ -57,14 +57,16 @@ export async function login(data: { email: string; password: string }): Promise<
   return toAuthResponse(user);
 }
 
-export async function refresh(refreshToken: string): Promise<{ accessToken: string }> {
+export async function refresh(refreshToken: string): Promise<RefreshResponse> {
   const payload = jwt.verify(refreshToken, env.JWT_REFRESH_SECRET) as JwtPayload;
   const user = await authRepository.findById(payload.userId);
   if (!user) {
     throw new Error('Usuario no encontrado');
   }
 
+  const jwtPayload: JwtPayload = { userId: user.id, email: user.email };
   return {
-    accessToken: generateAccessToken({ userId: user.id, email: user.email }),
+    accessToken: generateAccessToken(jwtPayload),
+    refreshToken: generateRefreshToken(jwtPayload),
   };
 }

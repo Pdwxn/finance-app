@@ -18,6 +18,9 @@ import investmentsRouter from './modules/investments/investments.router';
 import investmentTransactionsRouter from './modules/investment-transactions/investment-transactions.router';
 import budgetsRouter from './modules/budgets/budgets.router';
 import syncRouter from './modules/sync/sync.router';
+import reportsRouter from './modules/reports/reports.router';
+
+import './services/scheduler';
 
 const app = express();
 
@@ -45,6 +48,7 @@ app.use('/api/investments', investmentsRouter);
 app.use('/api/investment-transactions', investmentTransactionsRouter);
 app.use('/api/budgets', budgetsRouter);
 app.use('/api/sync', syncRouter);
+app.use('/api/reports', reportsRouter);
 
 app.listen(env.PORT, () => {
   console.log(`API running on http://localhost:${env.PORT}`);

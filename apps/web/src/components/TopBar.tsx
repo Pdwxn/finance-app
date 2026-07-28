@@ -15,6 +15,7 @@ const ROUTE_TITLES: Record<string, string> = {
   '/categories': 'Categorías',
   '/transactions': 'Transacciones',
   '/reports': 'Reportes',
+  '/reports/ai': 'Resúmenes IA',
   '/more': 'Más',
 };
 
