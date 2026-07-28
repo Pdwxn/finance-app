@@ -3,9 +3,8 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
-import { isOnboardingCompleted } from '@/lib/onboarding';
 
-export default function RootPage() {
+export default function OnboardingLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const token = useAuthStore(s => s.token);
 
@@ -15,16 +14,16 @@ export default function RootPage() {
 
   useEffect(() => {
     const currentToken = useAuthStore.getState().token;
-    if (currentToken) {
-      if (isOnboardingCompleted()) {
-        router.replace('/dashboard');
-      } else {
-        router.replace('/onboarding/step-1');
-      }
-    } else {
-      router.replace('/landing');
+    if (!currentToken) {
+      router.replace('/login');
     }
   }, [token, router]);
 
-  return null;
+  if (!useAuthStore.getState().token) return null;
+
+  return (
+    <div className="flex min-h-dvh flex-col bg-[var(--color-surface)]">
+      {children}
+    </div>
+  );
 }

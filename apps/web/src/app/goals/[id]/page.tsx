@@ -13,7 +13,7 @@ import { useAccountsStore } from '@/store/accounts';
 import { useExpensesStore } from '@/store/expenses';
 import { useIncomesStore } from '@/store/incomes';
 import { useTransfersStore } from '@/store/transfers';
-import { formatCLP, toCents } from '@finance-app/utils';
+import { formatCurrency, getCurrencySymbol, toCents } from '@finance-app/utils';
 
 export default function GoalDetailPage() {
   const params = useParams();
@@ -26,6 +26,9 @@ export default function GoalDetailPage() {
   const { expenses } = useExpensesStore();
   const { incomes } = useIncomesStore();
   const { transfers } = useTransfersStore();
+
+  const currency = accounts[0]?.currency ?? 'CLP';
+  const currencySymbol = getCurrencySymbol(currency);
 
   const [contributeOpen, setContributeOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -89,7 +92,7 @@ export default function GoalDetailPage() {
     const balance = account.initialBalance + incomeSum - expenseSum - transferOut + transferIn;
 
     if (balance < amount) {
-      setFormError(`Saldo insuficiente. Disponible: ${formatCLP(balance)}`);
+      setFormError(`Saldo insuficiente. Disponible: ${formatCurrency(balance, currency)}`);
       return;
     }
 
@@ -138,16 +141,16 @@ export default function GoalDetailPage() {
 
         <div className="rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 p-5 text-white mb-4">
           <p className="text-sm font-medium opacity-80">Meta de ahorro</p>
-          <p className="text-3xl font-bold mt-1">{formatCLP(goal.targetAmount)}</p>
+          <p className="text-3xl font-bold mt-1">{formatCurrency(goal.targetAmount, currency)}</p>
           <p className="text-xs opacity-80 mt-1">Fecha objetivo: {goal.targetDate}</p>
           <div className="mt-4 pt-4 border-t border-white/20">
             <div className="flex justify-between text-sm">
               <span>Ahorrado</span>
-              <span className="font-semibold">{formatCLP(totalSaved)}</span>
+              <span className="font-semibold">{formatCurrency(totalSaved, currency)}</span>
             </div>
             <div className="flex justify-between text-sm mt-1">
               <span>Faltante</span>
-              <span className="font-semibold">{formatCLP(remaining)}</span>
+              <span className="font-semibold">{formatCurrency(remaining, currency)}</span>
             </div>
           </div>
           <div className="mt-4">
@@ -185,7 +188,7 @@ export default function GoalDetailPage() {
                       {accounts.find(a => a.id === c.accountId)?.name ?? '?'}
                     </p>
                   </div>
-                  <span className="text-sm font-semibold text-emerald-500 ml-2">{formatCLP(c.amount)}</span>
+                  <span className="text-sm font-semibold text-emerald-500 ml-2">{formatCurrency(c.amount, currency)}</span>
                 </div>
               ))}
             </div>
@@ -206,7 +209,7 @@ export default function GoalDetailPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Monto ($)</label>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Monto ({currencySymbol})</label>
             <input type="number" inputMode="decimal" value={contributeAmount} onChange={e => setContributeAmount(e.target.value)}
               className="w-full h-11 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-[var(--color-text)] outline-none focus:border-[var(--color-primary)]"
               placeholder="50000" min="0" />

@@ -10,7 +10,7 @@ import { useExpensesStore } from '@/store/expenses';
 import { useIncomesStore } from '@/store/incomes';
 import { useTransfersStore } from '@/store/transfers';
 import { useAccountsStore } from '@/store/accounts';
-import { formatCLP } from '@finance-app/utils';
+import { formatCurrency } from '@finance-app/utils';
 
 type TypeFilter = 'all' | 'expense' | 'income' | 'transfer';
 type PeriodFilter = 'month' | 'quarter' | 'all';
@@ -154,7 +154,7 @@ export default function TransactionsPage() {
                   <span className={`text-sm font-semibold ml-2 ${
                     item.type === 'expense' ? 'text-rose-500' : item.type === 'income' ? 'text-emerald-500' : 'text-blue-500'
                   }`}>
-                    {item.type === 'expense' ? '-' : '+'}{formatCLP(item.amount)}
+                    {item.type === 'expense' ? '-' : '+'}{formatCurrency(item.amount, account?.currency ?? 'CLP')}
                   </span>
                 </div>
               );

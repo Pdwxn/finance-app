@@ -8,13 +8,28 @@ export function fromCents(cents: number): number {
   return cents / 100;
 }
 
-export function formatCLP(cents: number): string {
-  return new Intl.NumberFormat('es-CL', {
-    style: 'currency',
-    currency: 'CLP',
+export function formatCurrency(cents: number, currency: string = 'CLP'): string {
+  const symbol = getCurrencySymbol(currency);
+  const locale = currency === 'CLP' ? 'es-CL' : 'es-ES';
+  const formatted = new Intl.NumberFormat(locale, {
+    style: 'decimal',
     minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    maximumFractionDigits: currency === 'CLP' ? 0 : 2,
   }).format(fromCents(cents));
+  return `${symbol}${formatted}`;
+}
+
+export function formatCLP(cents: number): string {
+  return formatCurrency(cents, 'CLP');
+}
+
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  CLP: '$', USD: '$', EUR: '€', ARS: '$',
+  COP: '$', MXN: '$', PEN: 'S/', UYU: '$',
+};
+
+export function getCurrencySymbol(currency: string): string {
+  return CURRENCY_SYMBOLS[currency] ?? currency;
 }
 
 export function formatDate(date: string): string {

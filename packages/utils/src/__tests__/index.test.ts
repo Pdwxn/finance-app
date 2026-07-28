@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toCents, fromCents, formatCLP, formatDate, generateUUID } from '../index';
+import { toCents, fromCents, formatCLP, formatCurrency, getCurrencySymbol, formatDate, generateUUID } from '../index';
 
 describe('toCents', () => {
   it('converts integer dollars to cents', () => {
@@ -43,6 +43,50 @@ describe('formatCLP', () => {
   it('handles zero', () => {
     const result = formatCLP(0);
     expect(result).toContain('$');
+  });
+});
+
+describe('formatCurrency', () => {
+  it('formats CLP with $ symbol', () => {
+    const result = formatCurrency(150000, 'CLP');
+    expect(result).toBe('$1.500');
+  });
+
+  it('formats EUR with € symbol', () => {
+    const result = formatCurrency(150000, 'EUR');
+    expect(result).toContain('€');
+  });
+
+  it('formats USD with US$ symbol', () => {
+    const result = formatCurrency(150000, 'USD');
+    expect(result).toContain('US$');
+  });
+
+  it('defaults to CLP', () => {
+    const result = formatCurrency(150000);
+    expect(result).toContain('$');
+  });
+});
+
+describe('getCurrencySymbol', () => {
+  it('returns $ for CLP', () => {
+    expect(getCurrencySymbol('CLP')).toBe('$');
+  });
+
+  it('returns € for EUR', () => {
+    expect(getCurrencySymbol('EUR')).toBe('€');
+  });
+
+  it('returns US$ for USD', () => {
+    expect(getCurrencySymbol('USD')).toBe('US$');
+  });
+
+  it('returns COL$ for COP', () => {
+    expect(getCurrencySymbol('COP')).toBe('COL$');
+  });
+
+  it('returns raw code for unknown currency', () => {
+    expect(getCurrencySymbol('XYZ')).toBe('XYZ');
   });
 });
 

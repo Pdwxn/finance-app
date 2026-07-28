@@ -14,7 +14,7 @@ import { useAccountsStore } from '@/store/accounts';
 import { useExpensesStore } from '@/store/expenses';
 import { useIncomesStore } from '@/store/incomes';
 import { useTransfersStore } from '@/store/transfers';
-import { formatCLP } from '@finance-app/utils';
+import { formatCurrency } from '@finance-app/utils';
 import type { Account } from '@finance-app/types';
 
 export default function AccountsPage() {
@@ -101,11 +101,10 @@ export default function AccountsPage() {
                       <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[var(--color-surface-alt)] text-[var(--color-text-secondary)]">
                         {account.type === 'checking' ? 'Corriente' : account.type === 'savings' ? 'Ahorro' : account.type === 'cash' ? 'Efectivo' : account.type}
                       </span>
-                      <span className="text-xs text-[var(--color-text-secondary)]">{account.currency}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 ml-3">
-                    <span className="text-base font-semibold text-[var(--color-text)]">{formatCLP(accountBalances.get(account.id) ?? account.initialBalance)}</span>
+                    <span className="text-base font-semibold text-[var(--color-text)]">{formatCurrency(accountBalances.get(account.id) ?? account.initialBalance, account.currency)}</span>
                     <button
                       onClick={(e) => {
                         e.preventDefault();

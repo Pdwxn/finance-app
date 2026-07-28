@@ -9,10 +9,14 @@ import { Skeleton } from '@/components/Skeleton';
 import { EmptyState } from '@/components/EmptyState';
 import { SwipeDeleteAction } from '@/hooks/useSwipeToDelete';
 import { useGoalsStore } from '@/store/goals';
-import { formatCLP, toCents } from '@finance-app/utils';
+import { formatCurrency, getCurrencySymbol, toCents } from '@finance-app/utils';
+import { useAccountsStore } from '@/store/accounts';
 
 export default function GoalsPage() {
   const { goals, isLoading, fetchGoals, createGoal, deleteGoal } = useGoalsStore();
+  const { accounts, fetchAccounts } = useAccountsStore();
+  const currency = accounts[0]?.currency ?? 'CLP';
+  const currencySymbol = getCurrencySymbol(currency);
   const [createOpen, setCreateOpen] = useState(false);
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
@@ -20,7 +24,7 @@ export default function GoalsPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [formLoading, setFormLoading] = useState(false);
 
-  useEffect(() => { fetchGoals(); }, [fetchGoals]);
+  useEffect(() => { fetchGoals(); fetchAccounts(); }, [fetchGoals, fetchAccounts]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,7 +67,7 @@ export default function GoalsPage() {
                   className="relative z-10 block rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] p-4 hover:bg-[var(--color-surface-alt)] transition-colors">
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-[var(--color-text)]">{goal.name}</span>
-                    <span className="text-base font-semibold text-[var(--color-primary)]">{formatCLP(goal.targetAmount)}</span>
+                    <span className="text-base font-semibold text-[var(--color-primary)]">{formatCurrency(goal.targetAmount, currency)}</span>
                   </div>
                   <p className="text-xs text-[var(--color-text-secondary)] mt-1">Meta: {goal.targetDate}</p>
                 </Link>
@@ -82,7 +86,7 @@ export default function GoalsPage() {
               placeholder="Ej: Viaje a Europa" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Monto objetivo ($)</label>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Monto objetivo ({currencySymbol})</label>
             <input type="number" inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)}
               className="w-full h-11 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-[var(--color-text)] outline-none focus:border-[var(--color-primary)]"
               placeholder="2000000" min="0" />

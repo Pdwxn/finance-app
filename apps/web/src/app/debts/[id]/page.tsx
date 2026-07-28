@@ -13,7 +13,7 @@ import { useAccountsStore } from '@/store/accounts';
 import { useExpensesStore } from '@/store/expenses';
 import { useIncomesStore } from '@/store/incomes';
 import { useTransfersStore } from '@/store/transfers';
-import { formatCLP, toCents } from '@finance-app/utils';
+import { formatCurrency, getCurrencySymbol, toCents } from '@finance-app/utils';
 
 export default function DebtDetailPage() {
   const params = useParams();
@@ -26,6 +26,9 @@ export default function DebtDetailPage() {
   const { expenses } = useExpensesStore();
   const { incomes } = useIncomesStore();
   const { transfers } = useTransfersStore();
+
+  const currency = accounts[0]?.currency ?? 'CLP';
+  const currencySymbol = getCurrencySymbol(currency);
 
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -90,7 +93,7 @@ export default function DebtDetailPage() {
     const balance = account.initialBalance + incomeSum - expenseSum - transferOut + transferIn;
 
     if (balance < amount) {
-      setFormError(`Saldo insuficiente. Disponible: ${formatCLP(balance)}`);
+      setFormError(`Saldo insuficiente. Disponible: ${formatCurrency(balance, currency)}`);
       return;
     }
 
@@ -132,7 +135,7 @@ export default function DebtDetailPage() {
 
         <div className="rounded-2xl bg-gradient-to-br from-rose-500 to-orange-600 p-5 text-white mb-4">
           <p className="text-sm font-medium opacity-80">Deuda total</p>
-          <p className="text-3xl font-bold mt-1">{formatCLP(debt.initialAmount)}</p>
+          <p className="text-3xl font-bold mt-1">{formatCurrency(debt.initialAmount, currency)}</p>
           <div className="flex gap-4 mt-2 text-xs opacity-80">
             <span>Tasa: {debt.interestRate}%</span>
             <span>Desde: {debt.startDate}</span>
@@ -140,11 +143,11 @@ export default function DebtDetailPage() {
           <div className="mt-4 pt-4 border-t border-white/20">
             <div className="flex justify-between text-sm">
               <span>Pagado</span>
-              <span className="font-semibold">{formatCLP(totalPaid)}</span>
+              <span className="font-semibold">{formatCurrency(totalPaid, currency)}</span>
             </div>
             <div className="flex justify-between text-sm mt-1">
               <span>Saldo pendiente</span>
-              <span className="font-semibold">{formatCLP(Math.max(0, remaining))}</span>
+              <span className="font-semibold">{formatCurrency(Math.max(0, remaining), currency)}</span>
             </div>
           </div>
           <div className="mt-4">
@@ -182,7 +185,7 @@ export default function DebtDetailPage() {
                       {accounts.find(a => a.id === p.accountId)?.name ?? '?'}
                     </p>
                   </div>
-                  <span className="text-sm font-semibold text-emerald-500 ml-2">{formatCLP(p.amount)}</span>
+                  <span className="text-sm font-semibold text-emerald-500 ml-2">{formatCurrency(p.amount, currency)}</span>
                 </div>
               ))}
             </div>
@@ -201,7 +204,7 @@ export default function DebtDetailPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Monto ($)</label>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Monto ({currencySymbol})</label>
             <input type="number" inputMode="decimal" value={paymentAmount} onChange={e => setPaymentAmount(e.target.value)}
               className="w-full h-11 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-[var(--color-text)] outline-none focus:border-[var(--color-primary)]"
               placeholder="50000" min="0" />

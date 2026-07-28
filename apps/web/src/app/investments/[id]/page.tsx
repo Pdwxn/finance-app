@@ -9,7 +9,8 @@ import { Sheet } from '@/components/Sheet';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { useInvestmentsStore } from '@/store/investments';
 import { useInvestmentTransactionsStore } from '@/store/investment-transactions';
-import { formatCLP } from '@finance-app/utils';
+import { formatCurrency, getCurrencySymbol } from '@finance-app/utils';
+import { useAccountsStore } from '@/store/accounts';
 
 export default function InvestmentDetailPage() {
   const params = useParams();
@@ -18,6 +19,9 @@ export default function InvestmentDetailPage() {
 
   const { investments, fetchInvestments, deleteInvestment } = useInvestmentsStore();
   const { transactions, fetchTransactions, createTransaction } = useInvestmentTransactionsStore();
+  const { accounts, fetchAccounts } = useAccountsStore();
+  const currency = accounts[0]?.currency ?? 'CLP';
+  const currencySymbol = getCurrencySymbol(currency);
 
   const [txOpen, setTxOpen] = useState(false);
   const [txType, setTxType] = useState<'buy' | 'sell'>('buy');
@@ -30,7 +34,8 @@ export default function InvestmentDetailPage() {
   useEffect(() => {
     fetchInvestments();
     fetchTransactions(id);
-  }, [fetchInvestments, fetchTransactions, id]);
+    fetchAccounts();
+  }, [fetchInvestments, fetchTransactions, fetchAccounts, id]);
 
   const handleDelete = async () => {
     setFormLoading(true);
@@ -99,10 +104,10 @@ export default function InvestmentDetailPage() {
 
         <div className="rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 p-5 text-white mb-4">
           <p className="text-sm font-medium opacity-80">Valor total</p>
-          <p className="text-3xl font-bold mt-1">{formatCLP(totalCost)}</p>
+          <p className="text-3xl font-bold mt-1">{formatCurrency(totalCost, currency)}</p>
           <div className="flex gap-4 mt-2 text-xs opacity-80">
             <span>{investment.quantity} acciones</span>
-            <span>Costo prom.: {formatCLP(investment.averageCost)}</span>
+            <span>Costo prom.: {formatCurrency(investment.averageCost, currency)}</span>
           </div>
         </div>
 
@@ -140,13 +145,13 @@ export default function InvestmentDetailPage() {
                       <span className="text-xs text-[var(--color-text-secondary)]">{t.transactionDate}</span>
                     </div>
                     <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
-                      {t.quantity} acc. × {formatCLP(t.price)}
+                      {t.quantity} acc. × {formatCurrency(t.price, currency)}
                     </p>
                   </div>
                   <span className={`text-sm font-semibold ml-2 ${
                     t.type === 'buy' ? 'text-emerald-500' : 'text-rose-500'
                   }`}>
-                    {formatCLP(Math.round(t.quantity * t.price))}
+                    {formatCurrency(Math.round(t.quantity * t.price), currency)}
                   </span>
                 </div>
               ))}
@@ -164,7 +169,7 @@ export default function InvestmentDetailPage() {
               placeholder="5" min="0" step="0.01" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Precio por acción ($)</label>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Precio por acción ({currencySymbol})</label>
             <input type="number" inputMode="decimal" value={txPrice} onChange={e => setTxPrice(e.target.value)}
               className="w-full h-11 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-[var(--color-text)] outline-none focus:border-[var(--color-primary)]"
               placeholder="25000" min="0" />

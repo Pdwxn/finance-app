@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { HomeIcon, CreditCardIcon, ArrowsRightLeftIcon, EllipsisHorizontalIcon } from '@heroicons/react/24/outline';
 
 const navItems = [
-  { label: 'Resumen', href: '/', icon: HomeIcon },
+  { label: 'Resumen', href: '/dashboard', icon: HomeIcon },
   { label: 'Cuentas', href: '/accounts', icon: CreditCardIcon },
   { label: 'Movimientos', href: '/transactions', icon: ArrowsRightLeftIcon },
   { label: 'Más', href: '/more', icon: EllipsisHorizontalIcon },

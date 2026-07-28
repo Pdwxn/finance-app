@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '../../store/auth';
+import { isOnboardingCompleted } from '@/lib/onboarding';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -16,7 +17,7 @@ export default function LoginPage() {
     if (!email || !password) return;
     await login(email, password);
     const token = useAuthStore.getState().token;
-    if (token) router.push('/');
+    if (token) router.push(isOnboardingCompleted() ? '/dashboard' : '/onboarding/step-1');
   }
 
   return (

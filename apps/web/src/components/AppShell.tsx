@@ -9,11 +9,11 @@ import { BottomNav } from './BottomNav';
 import { SyncStatusIndicator } from './SyncStatusIndicator';
 import { PwaRegister } from './PwaRegister';
 
-const authPaths = new Set(['/login', '/register']);
+const authPaths = new Set(['/login', '/register', '/landing', '/onboarding']);
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isAuth = authPaths.has(pathname);
+  const isAuth = authPaths.has(pathname) || pathname.startsWith('/onboarding');
   const [syncStatus, setSyncStatus] = useState(statusStore.status);
 
   useEffect(() => {

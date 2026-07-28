@@ -7,7 +7,7 @@ import { useCategoriesStore } from '@/store/categories';
 import { useExpensesStore } from '@/store/expenses';
 import { useIncomesStore } from '@/store/incomes';
 import { useTransfersStore } from '@/store/transfers';
-import { toCents } from '@finance-app/utils';
+import { toCents, getCurrencySymbol } from '@finance-app/utils';
 
 type TransactionType = 'expense' | 'income' | 'transfer';
 
@@ -22,6 +22,9 @@ export function TransactionSheet({ open, onClose }: TransactionSheetProps) {
   const { createExpense } = useExpensesStore();
   const { createIncome } = useIncomesStore();
   const { createTransfer } = useTransfersStore();
+
+  const currency = accounts[0]?.currency ?? 'CLP';
+  const currencySymbol = getCurrencySymbol(currency);
 
   const [type, setType] = useState<TransactionType>('expense');
   const [accountId, setAccountId] = useState('');
@@ -180,7 +183,7 @@ export function TransactionSheet({ open, onClose }: TransactionSheetProps) {
         )}
 
         <div>
-          <label className={labelClass}>Monto ($)</label>
+          <label className={labelClass}>Monto ({currencySymbol})</label>
           <input type="number" inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)}
             className={inputClass} placeholder="15000" min="0" step="1" />
         </div>

@@ -12,7 +12,8 @@ import { useBudgetsStore } from '@/store/budgets';
 import { useCategoriesStore } from '@/store/categories';
 import { useExpensesStore } from '@/store/expenses';
 import { useCardChargesStore } from '@/store/card-charges';
-import { formatCLP, toCents, getPeriodYYYYMM } from '@finance-app/utils';
+import { useAccountsStore } from '@/store/accounts';
+import { formatCurrency, getCurrencySymbol, toCents, getPeriodYYYYMM } from '@finance-app/utils';
 
 function getMonthLabel(period: string): string {
   const [y, m] = period.split('-').map(Number);
@@ -40,6 +41,10 @@ export default function BudgetsPage() {
   const { categories, fetchCategories } = useCategoriesStore();
   const { expenses, fetchExpenses } = useExpensesStore();
   const { charges, fetchAllCharges } = useCardChargesStore();
+  const { accounts, fetchAccounts } = useAccountsStore();
+
+  const currency = accounts[0]?.currency ?? 'CLP';
+  const currencySymbol = getCurrencySymbol(currency);
 
   const [selectedPeriod, setSelectedPeriod] = useState(() => getPeriodYYYYMM(new Date()));
   const [createOpen, setCreateOpen] = useState(false);
@@ -53,7 +58,8 @@ export default function BudgetsPage() {
     fetchCategories();
     fetchExpenses();
     fetchAllCharges();
-  }, [fetchBudgets, fetchCategories, fetchExpenses, fetchAllCharges]);
+    fetchAccounts();
+  }, [fetchBudgets, fetchCategories, fetchExpenses, fetchAllCharges, fetchAccounts]);
 
   const periodBudgets = useMemo(
     () => budgets.filter(b => b.period === selectedPeriod),
@@ -159,14 +165,14 @@ export default function BudgetsPage() {
                         <span className="font-medium text-[var(--color-text)] truncate">{category?.name ?? '?'}</span>
                       </div>
                       <span className={`text-sm font-semibold ${isOverBudget ? 'text-[var(--color-danger)]' : 'text-[var(--color-text)]'}`}>
-                        {formatCLP(b.spent)} / {formatCLP(b.limitAmount)}
+                        {formatCurrency(b.spent, currency)} / {formatCurrency(b.limitAmount, currency)}
                       </span>
                     </div>
                     <div className="h-2 rounded-full bg-[var(--color-surface-alt)] overflow-hidden">
                       <div className="h-full rounded-full transition-all" style={{ width: `${b.usagePct}%`, backgroundColor: barColor }} />
                     </div>
                     <p className={`text-xs mt-1 font-medium ${isOverBudget ? 'text-[var(--color-danger)]' : isWarning ? 'text-yellow-500' : 'text-[var(--color-text-secondary)]'}`}>
-                      {isOverBudget ? `Excedido en ${formatCLP(b.spent - b.limitAmount)}` : `${b.usagePct}% usado - ${formatCLP(b.limitAmount - b.spent)} disponible`}
+                      {isOverBudget ? `Excedido en ${formatCurrency(b.spent - b.limitAmount, currency)}` : `${b.usagePct}% usado - ${formatCurrency(b.limitAmount - b.spent, currency)} disponible`}
                     </p>
                   </Link>
                 </div>
@@ -189,7 +195,7 @@ export default function BudgetsPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Límite mensual ($)</label>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Límite mensual ({currencySymbol})</label>
             <input type="number" inputMode="decimal" value={formAmount} onChange={e => setFormAmount(e.target.value)}
               className="w-full h-11 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-[var(--color-text)] outline-none focus:border-[var(--color-primary)]"
               placeholder="200000" min="0" />

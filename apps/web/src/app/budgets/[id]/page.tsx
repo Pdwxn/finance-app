@@ -11,7 +11,8 @@ import { useBudgetsStore } from '@/store/budgets';
 import { useCategoriesStore } from '@/store/categories';
 import { useExpensesStore } from '@/store/expenses';
 import { useCardChargesStore } from '@/store/card-charges';
-import { formatCLP, toCents } from '@finance-app/utils';
+import { useAccountsStore } from '@/store/accounts';
+import { formatCurrency, getCurrencySymbol, toCents } from '@finance-app/utils';
 
 export default function BudgetDetailPage() {
   const params = useParams();
@@ -22,6 +23,9 @@ export default function BudgetDetailPage() {
   const { categories, fetchCategories } = useCategoriesStore();
   const { expenses, fetchExpenses } = useExpensesStore();
   const { charges, fetchAllCharges } = useCardChargesStore();
+  const { accounts, fetchAccounts } = useAccountsStore();
+  const currency = accounts[0]?.currency ?? 'CLP';
+  const currencySymbol = getCurrencySymbol(currency);
 
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -37,7 +41,8 @@ export default function BudgetDetailPage() {
     fetchCategories();
     fetchExpenses();
     fetchAllCharges();
-  }, [fetchBudgets, fetchCategories, fetchExpenses, fetchAllCharges]);
+    fetchAccounts();
+  }, [fetchBudgets, fetchCategories, fetchExpenses, fetchAllCharges, fetchAccounts]);
 
   const periodTransactions = useMemo(() => {
     if (!budget) return [];
@@ -108,16 +113,16 @@ export default function BudgetDetailPage() {
             <span className="text-2xl">{category?.icon ?? '📁'}</span>
             <p className="text-sm font-medium opacity-80">{budget.period}</p>
           </div>
-          <p className="text-3xl font-bold mt-1">{formatCLP(budget.limitAmount)}</p>
+          <p className="text-3xl font-bold mt-1">{formatCurrency(budget.limitAmount, currency)}</p>
           <p className="text-xs opacity-80 mt-1">Límite mensual</p>
           <div className="mt-4 pt-4 border-t border-white/20">
             <div className="flex justify-between text-sm">
               <span>Gastado</span>
-              <span className="font-semibold">{formatCLP(spent)}</span>
+              <span className="font-semibold">{formatCurrency(spent, currency)}</span>
             </div>
             <div className="flex justify-between text-sm mt-1">
               <span>Disponible</span>
-              <span className="font-semibold">{formatCLP(remaining)}</span>
+              <span className="font-semibold">{formatCurrency(remaining, currency)}</span>
             </div>
           </div>
           <div className="mt-4">
@@ -153,7 +158,7 @@ export default function BudgetDetailPage() {
                     <p className="text-sm font-medium text-[var(--color-text)] truncate">{t.description || 'Sin descripción'}</p>
                     <p className="text-xs text-[var(--color-text-secondary)]">{t.date} · {t.type === 'expense' ? 'Gasto' : 'Cargo tarjeta'}</p>
                   </div>
-                  <span className="text-sm font-semibold text-rose-500 ml-2">{formatCLP(t.amount)}</span>
+                  <span className="text-sm font-semibold text-rose-500 ml-2">{formatCurrency(t.amount, currency)}</span>
                 </div>
               ))}
             </div>
@@ -164,7 +169,7 @@ export default function BudgetDetailPage() {
       <Sheet open={editOpen} onClose={() => setEditOpen(false)} title="Editar límite">
         <form onSubmit={handleEdit} className="flex flex-col gap-4">
           <div>
-            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Nuevo límite mensual ($)</label>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Nuevo límite mensual ({currencySymbol})</label>
             <input type="number" inputMode="decimal" value={editAmount} onChange={e => setEditAmount(e.target.value)}
               className="w-full h-11 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-[var(--color-text)] outline-none focus:border-[var(--color-primary)]"
               placeholder="200000" min="0" />

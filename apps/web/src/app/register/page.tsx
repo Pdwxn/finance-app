@@ -17,7 +17,7 @@ export default function RegisterPage() {
     if (!name || !email || !password) return;
     await register(name, email, password);
     const token = useAuthStore.getState().token;
-    if (token) router.push('/');
+    if (token) router.push('/onboarding/step-1');
   }
 
   return (

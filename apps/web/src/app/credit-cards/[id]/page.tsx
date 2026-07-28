@@ -17,7 +17,8 @@ import { useExpensesStore } from '@/store/expenses';
 import { useIncomesStore } from '@/store/incomes';
 import { useTransfersStore } from '@/store/transfers';
 import {
-  formatCLP,
+  formatCurrency,
+  getCurrencySymbol,
   toCents,
   calculateInstallment,
   getStatementPeriod,
@@ -52,6 +53,9 @@ export default function CardDetailPage() {
   const { expenses } = useExpensesStore();
   const { incomes } = useIncomesStore();
   const { transfers } = useTransfersStore();
+
+  const currency = accounts[0]?.currency ?? 'CLP';
+  const currencySymbol = getCurrencySymbol(currency);
 
   const [chargeOpen, setChargeOpen] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
@@ -230,7 +234,7 @@ export default function CardDetailPage() {
     const balance = account.initialBalance + incomeSum - expenseSum - transferOut + transferIn;
 
     if (balance < amount) {
-      setFormError(`Saldo insuficiente. Disponible: ${formatCLP(balance)}`);
+      setFormError(`Saldo insuficiente. Disponible: ${formatCurrency(balance, currency)}`);
       return;
     }
 
@@ -295,7 +299,7 @@ export default function CardDetailPage() {
         {/* ── Card summary ────────────────────────────────────────────── */}
         <div className="rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 p-5 text-white mb-4">
           <p className="text-sm font-medium opacity-80">Límite</p>
-          <p className="text-3xl font-bold mt-1">{formatCLP(card.limitAmount)}</p>
+          <p className="text-3xl font-bold mt-1">{formatCurrency(card.limitAmount, currency)}</p>
           <div className="flex gap-4 mt-2 text-xs opacity-80">
             <span>Cierre: {card.closingDay}</span>
             <span>Vence: {card.dueDay}</span>
@@ -303,11 +307,11 @@ export default function CardDetailPage() {
           <div className="mt-4 pt-4 border-t border-white/20">
             <div className="flex justify-between text-sm">
               <span>Disponible</span>
-              <span className="font-semibold">{formatCLP(Math.max(0, available))}</span>
+              <span className="font-semibold">{formatCurrency(Math.max(0, available), currency)}</span>
             </div>
             <div className="flex justify-between text-sm mt-1">
               <span>Saldo usado</span>
-              <span className="font-semibold">{formatCLP(Math.max(0, balance))}</span>
+              <span className="font-semibold">{formatCurrency(Math.max(0, balance), currency)}</span>
             </div>
           </div>
         </div>
@@ -324,7 +328,7 @@ export default function CardDetailPage() {
               {regularChargesInPeriod.map(c => (
                 <div key={c.id} className="flex items-center justify-between text-sm">
                   <span className="text-[var(--color-text)] truncate">{c.description}</span>
-                  <span className="text-rose-500 font-semibold ml-2 shrink-0">{formatCLP(c.amount)}</span>
+                  <span className="text-rose-500 font-semibold ml-2 shrink-0">{formatCurrency(c.amount, currency)}</span>
                 </div>
               ))}
               {installmentsInPeriod.map(i => (
@@ -332,19 +336,19 @@ export default function CardDetailPage() {
                   <span className="text-[var(--color-text)] truncate">
                     Cuota {i.installmentNumber}/{charges.find(c => c.id === i.cardChargeId)?.totalInstallments ?? '?'} — {getChargeName(i.cardChargeId)}
                   </span>
-                  <span className="text-rose-500 font-semibold ml-2 shrink-0">{formatCLP(i.amount)}</span>
+                  <span className="text-rose-500 font-semibold ml-2 shrink-0">{formatCurrency(i.amount, currency)}</span>
                 </div>
               ))}
               {monthlyFee > 0 && (
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-[var(--color-text)]">Comisión mensual</span>
-                  <span className="text-rose-500 font-semibold ml-2 shrink-0">{formatCLP(monthlyFee)}</span>
+                  <span className="text-rose-500 font-semibold ml-2 shrink-0">{formatCurrency(monthlyFee, currency)}</span>
                 </div>
               )}
             </div>
             <div className="flex items-center justify-between pt-3 mt-3 border-t border-[var(--color-border)]">
               <span className="text-sm font-semibold text-[var(--color-text)]">Total a pagar</span>
-              <span className="text-sm font-bold text-rose-600">{formatCLP(totalDue)}</span>
+              <span className="text-sm font-bold text-rose-600">{formatCurrency(totalDue, currency)}</span>
             </div>
           </div>
         )}
@@ -362,7 +366,7 @@ export default function CardDetailPage() {
                       <span className="text-[var(--color-text)] truncate">
                         Cuota {i.installmentNumber}/{charges.find(c => c.id === i.cardChargeId)?.totalInstallments ?? '?'} — {getChargeName(i.cardChargeId)}
                       </span>
-                      <span className="text-rose-500 font-semibold ml-2 shrink-0">{formatCLP(i.amount)}</span>
+                      <span className="text-rose-500 font-semibold ml-2 shrink-0">{formatCurrency(i.amount, currency)}</span>
                     </div>
                   </SwipeableRow>
                 ))}
@@ -417,7 +421,7 @@ export default function CardDetailPage() {
                       <p className="text-xs text-[var(--color-text-secondary)]">{c.transactionDate}</p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-rose-500">{formatCLP(c.amount)}</span>
+                      <span className="text-sm font-semibold text-rose-500">{formatCurrency(c.amount, currency)}</span>
                       <button
                         onClick={() => setChargeToDeleteId(c.id)}
                         className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--color-text-tertiary)] hover:text-[var(--color-danger)] hover:bg-[var(--color-surface-alt)] transition-colors"
@@ -449,7 +453,7 @@ export default function CardDetailPage() {
                       </p>
                       <p className="text-xs text-[var(--color-text-secondary)]">{p.paymentDate}</p>
                     </div>
-                    <span className="text-sm font-semibold text-emerald-500 ml-2">{formatCLP(p.amount)}</span>
+                    <span className="text-sm font-semibold text-emerald-500 ml-2">{formatCurrency(p.amount, currency)}</span>
                   </div>
                 </SwipeableRow>
               ))}
@@ -472,7 +476,7 @@ export default function CardDetailPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Monto ($)</label>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Monto ({currencySymbol})</label>
             <input type="number" inputMode="decimal" value={chargeAmount} onChange={e => setChargeAmount(e.target.value)}
               className="w-full h-11 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-[var(--color-text)] outline-none focus:border-[var(--color-primary)]"
               placeholder="25000" min="0" />
@@ -509,12 +513,12 @@ export default function CardDetailPage() {
 
               {previewInstallment !== null && (
                 <div className="text-sm text-[var(--color-primary)] font-medium space-y-0.5">
-                  <p>{chargeTotalInstallments} cuotas de {formatCLP(previewInstallment)}</p>
+                  <p>{chargeTotalInstallments} cuotas de {formatCurrency(previewInstallment, currency)}</p>
                   <p>
-                    Total: {formatCLP(previewInstallment * chargeTotalInstallments)}
+                    Total: {formatCurrency(previewInstallment * chargeTotalInstallments, currency)}
                     {chargeWithInterest && card?.interestRate && previewInstallment * chargeTotalInstallments > chargeAmountCents && (
                       <span className="text-rose-500">
-                        {' '}(+{formatCLP(previewInstallment * chargeTotalInstallments - chargeAmountCents)} interés)
+                        {' '}(+{formatCurrency(previewInstallment * chargeTotalInstallments - chargeAmountCents, currency)} interés)
                       </span>
                     )}
                   </p>
@@ -555,7 +559,7 @@ export default function CardDetailPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Monto ($)</label>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Monto ({currencySymbol})</label>
             <input type="number" inputMode="decimal" value={paymentAmount} onChange={e => setPaymentAmount(e.target.value)}
               className="w-full h-11 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-[var(--color-text)] outline-none focus:border-[var(--color-primary)]"
               placeholder="50000" min="0" />

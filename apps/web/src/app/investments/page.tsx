@@ -9,10 +9,14 @@ import { Skeleton } from '@/components/Skeleton';
 import { EmptyState } from '@/components/EmptyState';
 import { SwipeDeleteAction } from '@/hooks/useSwipeToDelete';
 import { useInvestmentsStore } from '@/store/investments';
-import { formatCLP } from '@finance-app/utils';
+import { formatCurrency, getCurrencySymbol } from '@finance-app/utils';
+import { useAccountsStore } from '@/store/accounts';
 
 export default function InvestmentsPage() {
   const { investments, isLoading, fetchInvestments, createInvestment, deleteInvestment } = useInvestmentsStore();
+  const { accounts, fetchAccounts } = useAccountsStore();
+  const currency = accounts[0]?.currency ?? 'CLP';
+  const currencySymbol = getCurrencySymbol(currency);
   const [createOpen, setCreateOpen] = useState(false);
   const [symbol, setSymbol] = useState('');
   const [name, setName] = useState('');
@@ -21,7 +25,7 @@ export default function InvestmentsPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [formLoading, setFormLoading] = useState(false);
 
-  useEffect(() => { fetchInvestments(); }, [fetchInvestments]);
+  useEffect(() => { fetchInvestments(); fetchAccounts(); }, [fetchInvestments, fetchAccounts]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,11 +76,11 @@ export default function InvestmentsPage() {
                         <span className="font-medium text-[var(--color-text)]">{inv.name}</span>
                         <span className="ml-2 text-xs font-mono text-[var(--color-text-secondary)]">{inv.symbol}</span>
                       </div>
-                      <span className="text-base font-semibold text-emerald-500">{formatCLP(totalCost)}</span>
+                      <span className="text-base font-semibold text-emerald-500">{formatCurrency(totalCost, currency)}</span>
                     </div>
                     <div className="flex gap-3 mt-2 text-xs text-[var(--color-text-secondary)]">
                       <span>{inv.quantity} acc.</span>
-                      <span>Costo prom.: {formatCLP(inv.averageCost)}</span>
+                      <span>Costo prom.: {formatCurrency(inv.averageCost, currency)}</span>
                     </div>
                   </Link>
                 </div>
@@ -107,7 +111,7 @@ export default function InvestmentsPage() {
               placeholder="10" min="0" step="0.01" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Costo promedio por acción ($)</label>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Costo promedio por acción ({currencySymbol})</label>
             <input type="number" inputMode="decimal" value={cost} onChange={e => setCost(e.target.value)}
               className="w-full h-11 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-[var(--color-text)] outline-none focus:border-[var(--color-primary)]"
               placeholder="15000" min="0" />

@@ -9,10 +9,14 @@ import { Skeleton } from '@/components/Skeleton';
 import { EmptyState } from '@/components/EmptyState';
 import { SwipeDeleteAction } from '@/hooks/useSwipeToDelete';
 import { useCreditCardsStore } from '@/store/credit-cards';
-import { formatCLP } from '@finance-app/utils';
+import { useAccountsStore } from '@/store/accounts';
+import { formatCurrency, getCurrencySymbol } from '@finance-app/utils';
 
 export default function CreditCardsPage() {
   const { cards, isLoading, fetchCards, createCard, deleteCard } = useCreditCardsStore();
+  const { accounts, fetchAccounts } = useAccountsStore();
+  const currency = accounts[0]?.currency ?? 'CLP';
+  const currencySymbol = getCurrencySymbol(currency);
   const [createOpen, setCreateOpen] = useState(false);
   const [name, setName] = useState('');
   const [limitAmount, setLimitAmount] = useState('');
@@ -22,7 +26,7 @@ export default function CreditCardsPage() {
   const [interestRate, setInterestRate] = useState('');
   const [formLoading, setFormLoading] = useState(false);
 
-  useEffect(() => { fetchCards(); }, [fetchCards]);
+  useEffect(() => { fetchCards(); fetchAccounts(); }, [fetchCards, fetchAccounts]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,7 +83,7 @@ export default function CreditCardsPage() {
                 >
                   <div className="flex items-center justify-between">
                     <span className="font-medium">{card.name}</span>
-                    <span className="text-sm opacity-80">{formatCLP(card.limitAmount)}</span>
+                    <span className="text-sm opacity-80">{formatCurrency(card.limitAmount, currency)}</span>
                   </div>
                   <div className="flex gap-3 mt-2 text-xs opacity-80">
                     <span>Cierre: {card.closingDay}</span>
@@ -101,7 +105,7 @@ export default function CreditCardsPage() {
               placeholder="Ej: Visa Falabella" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Límite ($)</label>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Límite ({currencySymbol})</label>
             <input type="number" inputMode="decimal" value={limitAmount} onChange={e => setLimitAmount(e.target.value)}
               className="w-full h-11 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-[var(--color-text)] outline-none focus:border-[var(--color-primary)]"
               placeholder="1000000" min="0" />
@@ -121,7 +125,7 @@ export default function CreditCardsPage() {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Comisión mensual ($)</label>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Comisión mensual ({currencySymbol})</label>
             <input type="number" inputMode="decimal" value={monthlyFee} onChange={e => setMonthlyFee(e.target.value)}
               className="w-full h-11 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-[var(--color-text)] outline-none focus:border-[var(--color-primary)]"
               placeholder="5000" min="0" />

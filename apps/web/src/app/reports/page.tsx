@@ -8,7 +8,7 @@ import { useIncomesStore } from '@/store/incomes';
 import { useCategoriesStore } from '@/store/categories';
 import { useAccountsStore } from '@/store/accounts';
 import { useDebtsStore } from '@/store/debts';
-import { formatCLP } from '@finance-app/utils';
+import { formatCurrency, getCurrencySymbol } from '@finance-app/utils';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, Cell,
   type TooltipContentProps,
@@ -37,6 +37,9 @@ export default function ReportsPage() {
   const { debts, fetchDebts } = useDebtsStore();
 
   const [loading, setLoading] = useState(true);
+
+  const currency = accounts[0]?.currency ?? 'CLP';
+  const currencySymbol = getCurrencySymbol(currency);
 
   useEffect(() => {
     Promise.all([
@@ -96,7 +99,7 @@ export default function ReportsPage() {
         <p className="font-medium text-[var(--color-text)] mb-1">{props.label}</p>
         {props.payload.map((p, i) => (
           <p key={i} className={p.name === 'Ingresos' ? 'text-emerald-500' : 'text-rose-500'}>
-            {p.name}: {formatCLP(Number(p.value))}
+            {p.name}: {formatCurrency(Number(p.value), currency)}
           </p>
         ))}
       </div>
@@ -109,7 +112,7 @@ export default function ReportsPage() {
     if (val == null) return null;
     return (
       <div className="rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)] p-3 shadow-lg text-xs">
-        <p className="font-medium text-[var(--color-text)]">{props.label}: {formatCLP(Number(val))}</p>
+        <p className="font-medium text-[var(--color-text)]">{props.label}: {formatCurrency(Number(val), currency)}</p>
       </div>
     );
   }
@@ -131,7 +134,7 @@ export default function ReportsPage() {
 
         <div className="rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] p-4">
           <h3 className="text-sm font-semibold text-[var(--color-text)] mb-1">Patrimonio neto</h3>
-          <p className="text-2xl font-bold text-[var(--color-text)]">{formatCLP(netWorth)}</p>
+          <p className="text-2xl font-bold text-[var(--color-text)]">{formatCurrency(netWorth, currency)}</p>
 
           {totalIncome === 0 && totalExpense === 0 ? (
             <p className="text-xs text-[var(--color-text-secondary)] mt-3">No hay ingresos ni gastos registrados.</p>
@@ -140,7 +143,7 @@ export default function ReportsPage() {
               <div>
                 <div className="flex justify-between text-xs mb-1">
                   <span className="text-emerald-500 font-medium">Ingresos</span>
-                  <span className="text-emerald-500 font-semibold">{formatCLP(totalIncome)}</span>
+                  <span className="text-emerald-500 font-semibold">{formatCurrency(totalIncome, currency)}</span>
                 </div>
                 <div className="h-2 rounded-full bg-[var(--color-surface-alt)] overflow-hidden">
                   <div className="h-full rounded-full bg-emerald-500 transition-all"
@@ -150,7 +153,7 @@ export default function ReportsPage() {
               <div>
                 <div className="flex justify-between text-xs mb-1">
                   <span className="text-rose-500 font-medium">Gastos</span>
-                  <span className="text-rose-500 font-semibold">{formatCLP(totalExpense)}</span>
+                  <span className="text-rose-500 font-semibold">{formatCurrency(totalExpense, currency)}</span>
                 </div>
                 <div className="h-2 rounded-full bg-[var(--color-surface-alt)] overflow-hidden">
                   <div className="h-full rounded-full bg-rose-500 transition-all"
@@ -167,7 +170,7 @@ export default function ReportsPage() {
             <BarChart data={cashflowData} barGap={2}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
               <XAxis dataKey="month" tick={{ fontSize: 10, fill: 'var(--color-text-secondary)' }} />
-              <YAxis tick={{ fontSize: 10, fill: 'var(--color-text-secondary)' }} tickFormatter={v => `$${Math.round(v / 1000)}k`} />
+              <YAxis tick={{ fontSize: 10, fill: 'var(--color-text-secondary)' }} tickFormatter={v => `${currencySymbol}${Math.round(v / 1000)}k`} />
               <Tooltip content={CashflowTooltip} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
               <Bar dataKey="income" name="Ingresos" fill="#22c55e" radius={[4, 4, 0, 0]} />
@@ -184,7 +187,7 @@ export default function ReportsPage() {
             <ResponsiveContainer width="100%" height={Math.max(200, spendingByCategory.length * 36)}>
               <BarChart data={spendingByCategory} layout="vertical" margin={{ left: 0, right: 0, top: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" horizontal={false} />
-                <XAxis type="number" tick={{ fontSize: 10, fill: 'var(--color-text-secondary)' }} tickFormatter={v => `$${Math.round(v / 1000)}k`} />
+                <XAxis type="number" tick={{ fontSize: 10, fill: 'var(--color-text-secondary)' }} tickFormatter={v => `${currencySymbol}${Math.round(v / 1000)}k`} />
                 <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: 'var(--color-text-secondary)' }} width={80} />
                 <Tooltip content={SpendingTooltip} />
                 <Bar dataKey="amount" radius={[0, 4, 4, 0]} maxBarSize={20}>
