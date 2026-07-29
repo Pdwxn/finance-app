@@ -25,7 +25,7 @@ export default function OnboardingStep1() {
   }
 
   return (
-    <div className="flex flex-col flex-1 px-6 pt-12 pb-8">
+    <div className="flex flex-col flex-1 px-6 pt-10 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
       <div className="flex items-center gap-2 mb-8">
         <div className="h-1.5 flex-1 rounded-full bg-[var(--color-primary)]" />
         <div className="h-1.5 flex-1 rounded-full bg-[var(--color-border)]" />
@@ -39,12 +39,12 @@ export default function OnboardingStep1() {
         Puedes cambiar esto después en la configuración.
       </p>
 
-      <div className="flex-1 space-y-2">
+      <div className="flex-1 space-y-3 overflow-y-auto min-h-0">
         {currencies.map(c => (
           <button
             key={c.code}
             onClick={() => setSelected(c.code)}
-            className={`w-full flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${
+            className={`w-full flex items-center gap-3 p-5 rounded-xl border-2 transition-all ${
               selected === c.code
                 ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5'
                 : 'border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-text-secondary)]'
@@ -70,7 +70,7 @@ export default function OnboardingStep1() {
 
       <button
         onClick={handleNext}
-        className="w-full h-12 rounded-xl bg-[var(--color-primary)] text-white font-bold text-base hover:bg-[var(--color-primary-dark)] active:scale-[0.98] transition-all mt-6"
+        className="w-full h-12 rounded-xl bg-[var(--color-primary)] text-white font-bold text-base hover:bg-[var(--color-primary-dark)] active:scale-[0.98] transition-all mt-6 flex-shrink-0"
       >
         Siguiente
       </button>

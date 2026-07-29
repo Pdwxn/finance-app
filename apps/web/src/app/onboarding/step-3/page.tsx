@@ -12,7 +12,7 @@ export default function OnboardingStep3() {
   }
 
   return (
-    <div className="flex flex-col flex-1 items-center justify-center px-6 text-center">
+    <div className="flex flex-col flex-1 items-center justify-center px-6 text-center pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
       <div className="mb-8">
         <div className="w-24 h-24 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center mx-auto">
           <svg className="w-12 h-12 text-[var(--color-primary)]" viewBox="0 0 48 48" fill="none">

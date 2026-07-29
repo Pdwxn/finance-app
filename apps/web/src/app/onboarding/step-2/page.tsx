@@ -55,7 +55,7 @@ export default function OnboardingStep2() {
   }
 
   return (
-    <div className="flex flex-col flex-1 px-6 pt-12 pb-8">
+    <div className="flex flex-col flex-1 px-6 pt-10 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
       <div className="flex items-center gap-2 mb-8">
         <div className="h-1.5 flex-1 rounded-full bg-[var(--color-primary)]" />
         <div className="h-1.5 flex-1 rounded-full bg-[var(--color-primary)]" />
