@@ -40,6 +40,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <BottomNav />
       <Toaster
         position="top-center"
+        style={{ marginTop: 'calc(3.5rem + env(safe-area-inset-top))' }}
         toastOptions={{
           style: {
             background: 'var(--color-surface)',
