@@ -12,6 +12,15 @@ export interface SpendingByCategoryRow {
   amount: number;
 }
 
+export interface MovementRow {
+  date: string;
+  type: string;
+  category: string;
+  description: string;
+  account: string;
+  amount: number;
+}
+
 export interface ReportData {
   cashflowData: CashflowRow[];
   spendingByCategory: SpendingByCategoryRow[];
@@ -19,6 +28,7 @@ export interface ReportData {
   totalExpense: number;
   netWorth: number;
   currency: string;
+  currentMonthMovements: MovementRow[];
 }
 
 export async function exportMonthlyReport(data: ReportData): Promise<void> {
@@ -92,6 +102,38 @@ export async function exportMonthlyReport(data: ReportData): Promise<void> {
 
   styleSheet(categorySheet, numFmt, 2);
   categorySheet.getColumn('percentage')!.numFmt = '0.0%';
+
+  // ── Hoja 4: Movimientos del Mes ──────────────────────────────────────────
+  const movementsSheet = workbook.addWorksheet('Movimientos del Mes');
+  movementsSheet.columns = [
+    { header: 'Fecha', key: 'date', width: 14 },
+    { header: 'Tipo', key: 'type', width: 16 },
+    { header: 'Categoría', key: 'category', width: 22 },
+    { header: 'Descripción', key: 'description', width: 40 },
+    { header: 'Cuenta', key: 'account', width: 22 },
+    { header: `Monto (${currencySymbol})`, key: 'amount', width: 20 },
+  ];
+
+  for (const row of data.currentMonthMovements) {
+    movementsSheet.addRow(row);
+  }
+
+  const movesHeaderRow = movementsSheet.getRow(1);
+  movesHeaderRow.font = { bold: true };
+  movesHeaderRow.eachCell((cell) => {
+    cell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF6366F1' },
+    };
+    cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+  });
+
+  for (let i = 2; i <= movementsSheet.rowCount; i++) {
+    const row = movementsSheet.getRow(i);
+    const amountCell = row.getCell(6);
+    (amountCell as import('exceljs').Cell).numFmt = numFmt;
+  }
 
   // ── Descargar ────────────────────────────────────────────────────────────
   const now = new Date();

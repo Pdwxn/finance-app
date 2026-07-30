@@ -1,15 +1,16 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useCallback, useState } from 'react';
 import { Skeleton } from '@/components/Skeleton';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { useExpensesStore } from '@/store/expenses';
 import { useIncomesStore } from '@/store/incomes';
+import { useTransfersStore } from '@/store/transfers';
 import { useCategoriesStore } from '@/store/categories';
 import { useAccountsStore } from '@/store/accounts';
 import { useDebtsStore } from '@/store/debts';
 import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
-import { formatCurrency, getCurrencySymbol } from '@finance-app/utils';
+import { formatCurrency, getCurrencySymbol, fromCents } from '@finance-app/utils';
 import { useExportReports } from '@/hooks/useExportReports';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, Cell,
@@ -34,6 +35,7 @@ function monthLabel(key: string) {
 export default function ReportsPage() {
   const { expenses, fetchExpenses } = useExpensesStore();
   const { incomes, fetchIncomes } = useIncomesStore();
+  const { transfers, fetchTransfers } = useTransfersStore();
   const { categories, fetchCategories, getCategoryById } = useCategoriesStore();
   const { accounts, fetchAccounts } = useAccountsStore();
   const { debts, fetchDebts } = useDebtsStore();
@@ -48,11 +50,12 @@ export default function ReportsPage() {
     Promise.all([
       fetchExpenses(),
       fetchIncomes(),
+      fetchTransfers(),
       fetchCategories(),
       fetchAccounts(),
       fetchDebts(),
     ]).then(() => setLoading(false));
-  }, [fetchExpenses, fetchIncomes, fetchCategories, fetchAccounts, fetchDebts]);
+  }, [fetchExpenses, fetchIncomes, fetchTransfers, fetchCategories, fetchAccounts, fetchDebts]);
 
   const cashflowData = useMemo(() => {
     const map = new Map<string, { month: string; income: number; expense: number }>();
@@ -94,6 +97,49 @@ export default function ReportsPage() {
     const totalDebts = debts.reduce((s, d) => s + d.initialAmount, 0);
     return totalAssets + totalIncome - totalExpense - totalDebts;
   }, [accounts, debts, totalIncome, totalExpense]);
+
+  const getAccountName = useCallback((id: string) => accounts.find(a => a.id === id)?.name ?? '—', [accounts]);
+
+  const currentMonthMovements = useMemo(() => {
+    const now = new Date();
+    const prefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+    const mappedExpenses: import('@/lib/export-reports').MovementRow[] = expenses
+      .filter(e => e.transactionDate.startsWith(prefix))
+      .map(e => ({
+        date: e.transactionDate,
+        type: 'Gasto',
+        category: getCategoryById(e.categoryId)?.name ?? 'Sin categoría',
+        description: e.description,
+        account: getAccountName(e.accountId),
+        amount: fromCents(e.amount),
+      }));
+
+    const mappedIncomes: import('@/lib/export-reports').MovementRow[] = incomes
+      .filter(i => i.transactionDate.startsWith(prefix))
+      .map(i => ({
+        date: i.transactionDate,
+        type: 'Ingreso',
+        category: getCategoryById(i.categoryId)?.name ?? 'Sin categoría',
+        description: i.description,
+        account: getAccountName(i.accountId),
+        amount: fromCents(i.amount),
+      }));
+
+    const mappedTransfers: import('@/lib/export-reports').MovementRow[] = transfers
+      .filter(t => t.transactionDate.startsWith(prefix))
+      .map(t => ({
+        date: t.transactionDate,
+        type: 'Transferencia',
+        category: '—',
+        description: t.description,
+        account: `${getAccountName(t.fromAccountId)} → ${getAccountName(t.toAccountId)}`,
+        amount: fromCents(t.amount),
+      }));
+
+    return [...mappedExpenses, ...mappedIncomes, ...mappedTransfers]
+      .sort((a, b) => b.date.localeCompare(a.date));
+  }, [expenses, incomes, transfers, getCategoryById, getAccountName]);
 
   function CashflowTooltip(props: TooltipContentProps) {
     if (!props.active || !props.payload || props.payload.length === 0) return null;
@@ -144,6 +190,7 @@ export default function ReportsPage() {
                 totalExpense,
                 netWorth,
                 currency,
+                currentMonthMovements,
               })
             }
             disabled={isExporting}
