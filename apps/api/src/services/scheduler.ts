@@ -8,6 +8,18 @@ function log(msg: string) {
   console.log(`[Scheduler] ${new Date().toISOString()} - ${msg}`);
 }
 
+/**
+ * El cron corre al INICIO del período (lunes 8am / día 1 8am), momento en el
+ * que ese período recién comienza y no tiene movimientos todavía. Para que
+ * el reporte resuma el período que ACABA de cerrar, usamos una fecha de
+ * referencia de ayer, que cae dentro de la semana/mes anterior.
+ */
+function referenceDateForClosedPeriod(): Date {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return d;
+}
+
 async function processAllUsers(generator: (userId: string) => Promise<void>) {
   try {
     const allUsers = await db
@@ -34,12 +46,14 @@ async function processAllUsers(generator: (userId: string) => Promise<void>) {
 
 cron.schedule('0 8 * * 1', () => {
   log('Iniciando generación de reportes semanales...');
-  processAllUsers(generateWeeklyReport);
+  const referenceDate = referenceDateForClosedPeriod();
+  processAllUsers(userId => generateWeeklyReport(userId, referenceDate));
 });
 
 cron.schedule('0 8 1 * *', () => {
   log('Iniciando generación de reportes mensuales...');
-  processAllUsers(generateMonthlyReport);
+  const referenceDate = referenceDateForClosedPeriod();
+  processAllUsers(userId => generateMonthlyReport(userId, referenceDate));
 });
 
 log('Scheduler inicializado');

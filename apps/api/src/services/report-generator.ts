@@ -228,10 +228,9 @@ INSTRUCCIONES:
 RESPUESTO (solo el resumen, sin títulos ni formato markdown):`;
 }
 
-export async function generateWeeklyReport(userId: string): Promise<void> {
-  const now = new Date();
-  const { start, end } = getWeekRange(now);
-  const prevRange = getPreviousWeekRange(now);
+export async function generateWeeklyReport(userId: string, referenceDate: Date = new Date()): Promise<void> {
+  const { start, end } = getWeekRange(referenceDate);
+  const prevRange = getPreviousWeekRange(referenceDate);
 
   const existing = await db
     .select()
@@ -268,10 +267,9 @@ export async function generateWeeklyReport(userId: string): Promise<void> {
   });
 }
 
-export async function generateMonthlyReport(userId: string): Promise<void> {
-  const now = new Date();
-  const { start, end } = getMonthRange(now);
-  const prevRange = getPreviousMonthRange(now);
+export async function generateMonthlyReport(userId: string, referenceDate: Date = new Date()): Promise<void> {
+  const { start, end } = getMonthRange(referenceDate);
+  const prevRange = getPreviousMonthRange(referenceDate);
 
   const existing = await db
     .select()
