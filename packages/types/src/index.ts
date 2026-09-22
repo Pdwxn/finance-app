@@ -183,3 +183,7 @@ export interface FinancialReport extends BaseEntity {
   summary: string;
   metadata: ReportMetadata;
 }
+
+export interface GenerateReportResult {
+  created: boolean;
+}

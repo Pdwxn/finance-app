@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Skeleton } from '@/components/Skeleton';
 import {
@@ -10,17 +10,22 @@ import {
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
   MinusIcon,
+  TrashIcon,
 } from '@heroicons/react/24/outline';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { apiGet } from '@/lib/api';
+import { useReportsStore } from '@/store/reports';
 import { formatCurrency, formatDate } from '@finance-app/utils';
 import type { FinancialReport } from '@finance-app/types';
 
 export default function AiReportDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const id = params.id as string;
   const [report, setReport] = useState<FinancialReport | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const deleteReport = useReportsStore(state => state.deleteReport);
 
   useEffect(() => {
     async function load() {
@@ -33,6 +38,13 @@ export default function AiReportDetailPage() {
     }
     load();
   }, [id]);
+
+  async function handleDelete() {
+    if (!confirm('¿Eliminar este reporte?')) return;
+    setIsDeleting(true);
+    await deleteReport(id);
+    router.push('/reports/ai');
+  }
 
   if (isLoading) {
     return (
@@ -72,32 +84,42 @@ export default function AiReportDetailPage() {
       <div className="p-4 space-y-5 pb-10">
 
         {/* Header */}
-        <div className="flex items-center gap-3">
-          <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-            report.type === 'weekly'
-              ? 'bg-indigo-50 dark:bg-indigo-950/20 text-indigo-500'
-              : 'bg-purple-50 dark:bg-purple-950/20 text-purple-500'
-          }`}>
-            {report.type === 'weekly'
-              ? <CalendarDaysIcon className="w-6 h-6" />
-              : <CalendarIcon className="w-6 h-6" />
-            }
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-bold text-[var(--color-text)]">{report.title}</h2>
-              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                report.type === 'weekly'
-                  ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
-                  : 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
-              }`}>
-                {report.type === 'weekly' ? 'Semanal' : 'Mensual'}
-              </span>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${
+              report.type === 'weekly'
+                ? 'bg-indigo-50 dark:bg-indigo-950/20 text-indigo-500'
+                : 'bg-purple-50 dark:bg-purple-950/20 text-purple-500'
+            }`}>
+              {report.type === 'weekly'
+                ? <CalendarDaysIcon className="w-6 h-6" />
+                : <CalendarIcon className="w-6 h-6" />
+              }
             </div>
-            <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
-              Generado el {formatDate(report.createdAt.slice(0, 10))}
-            </p>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-bold text-[var(--color-text)] truncate">{report.title}</h2>
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${
+                  report.type === 'weekly'
+                    ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
+                    : 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
+                }`}>
+                  {report.type === 'weekly' ? 'Semanal' : 'Mensual'}
+                </span>
+              </div>
+              <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
+                Generado el {formatDate(report.createdAt.slice(0, 10))}
+              </p>
+            </div>
           </div>
+          <button
+            onClick={handleDelete}
+            disabled={isDeleting}
+            aria-label="Eliminar reporte"
+            className="w-11 h-11 shrink-0 flex items-center justify-center rounded-xl text-[var(--color-text-tertiary)] hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors disabled:opacity-50"
+          >
+            <TrashIcon className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Summary Card */}

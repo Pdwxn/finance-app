@@ -9,6 +9,7 @@ import {
   SparklesIcon,
   TrashIcon,
   ExclamationCircleIcon,
+  InformationCircleIcon,
 } from '@heroicons/react/24/outline';
 import { useReportsStore } from '@/store/reports';
 import { formatDate } from '@finance-app/utils';
@@ -21,7 +22,7 @@ const TABS: Array<{ key: ReportType | 'all'; label: string }> = [
 ];
 
 export default function AiReportsPage() {
-  const { reports, isLoading, isGenerating, error, fetchReports, generateReport, deleteReport } = useReportsStore();
+  const { reports, isLoading, isGenerating, error, info, fetchReports, generateReport, deleteReport } = useReportsStore();
   const [activeTab, setActiveTab] = useState<ReportType | 'all'>('all');
   const [mounted, setMounted] = useState(false);
 
@@ -55,6 +56,13 @@ export default function AiReportsPage() {
           <div className="flex items-center gap-2 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800 p-3">
             <ExclamationCircleIcon className="w-4 h-4 text-rose-500 shrink-0" />
             <span className="text-xs font-medium text-rose-600 dark:text-rose-400">{error}</span>
+          </div>
+        )}
+
+        {info && (
+          <div className="flex items-center gap-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800 p-3">
+            <InformationCircleIcon className="w-4 h-4 text-indigo-500 shrink-0" />
+            <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400">{info}</span>
           </div>
         )}
 

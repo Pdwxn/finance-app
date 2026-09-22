@@ -19,10 +19,9 @@ export async function remove(id: string, userId: string) {
   await reportsRepository.softDelete(id, userId);
 }
 
-export async function generate(userId: string, type: 'weekly' | 'monthly') {
+export async function generate(userId: string, type: 'weekly' | 'monthly'): Promise<boolean> {
   if (type === 'weekly') {
-    await generateWeeklyReport(userId);
-  } else {
-    await generateMonthlyReport(userId);
+    return generateWeeklyReport(userId);
   }
+  return generateMonthlyReport(userId);
 }

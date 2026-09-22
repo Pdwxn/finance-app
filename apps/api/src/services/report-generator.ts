@@ -228,7 +228,7 @@ INSTRUCCIONES:
 RESPUESTO (solo el resumen, sin títulos ni formato markdown):`;
 }
 
-export async function generateWeeklyReport(userId: string, referenceDate: Date = new Date()): Promise<void> {
+export async function generateWeeklyReport(userId: string, referenceDate: Date = new Date()): Promise<boolean> {
   const { start, end } = getWeekRange(referenceDate);
   const prevRange = getPreviousWeekRange(referenceDate);
 
@@ -243,7 +243,7 @@ export async function generateWeeklyReport(userId: string, referenceDate: Date =
     ))
     .limit(1);
 
-  if (existing.length > 0) return;
+  if (existing.length > 0) return false;
 
   const { current, comparison } = await aggregatePeriod(userId, start, end, prevRange.start, prevRange.end);
 
@@ -265,9 +265,11 @@ export async function generateWeeklyReport(userId: string, referenceDate: Date =
     summary,
     metadata: current as unknown as Record<string, unknown>,
   });
+
+  return true;
 }
 
-export async function generateMonthlyReport(userId: string, referenceDate: Date = new Date()): Promise<void> {
+export async function generateMonthlyReport(userId: string, referenceDate: Date = new Date()): Promise<boolean> {
   const { start, end } = getMonthRange(referenceDate);
   const prevRange = getPreviousMonthRange(referenceDate);
 
@@ -282,7 +284,7 @@ export async function generateMonthlyReport(userId: string, referenceDate: Date 
     ))
     .limit(1);
 
-  if (existing.length > 0) return;
+  if (existing.length > 0) return false;
 
   const { current, comparison } = await aggregatePeriod(userId, start, end, prevRange.start, prevRange.end);
 
@@ -303,4 +305,6 @@ export async function generateMonthlyReport(userId: string, referenceDate: Date 
     summary,
     metadata: current as unknown as Record<string, unknown>,
   });
+
+  return true;
 }

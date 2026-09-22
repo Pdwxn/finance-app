@@ -20,7 +20,7 @@ function referenceDateForClosedPeriod(): Date {
   return d;
 }
 
-async function processAllUsers(generator: (userId: string) => Promise<void>) {
+async function processAllUsers(generator: (userId: string) => Promise<boolean>) {
   try {
     const allUsers = await db
       .select({ id: users.id })

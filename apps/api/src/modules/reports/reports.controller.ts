@@ -54,8 +54,14 @@ export async function generate(req: Request, res: Response) {
     return;
   }
   try {
-    await reportsService.generate(userId, parsed.data.type);
-    res.json({ success: true, message: 'Reporte generado correctamente' });
+    const created = await reportsService.generate(userId, parsed.data.type);
+    res.json({
+      success: true,
+      message: created
+        ? 'Reporte generado correctamente'
+        : 'Ya existe un reporte para este período',
+      data: { created },
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Error interno';
     res.status(500).json({ success: false, message });

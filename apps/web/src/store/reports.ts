@@ -1,22 +1,24 @@
 import { create } from 'zustand';
 import { apiGet, apiPost, apiDelete } from '../lib/api';
-import type { FinancialReport, ReportType } from '@finance-app/types';
+import type { FinancialReport, GenerateReportResult, ReportType } from '@finance-app/types';
 
 interface ReportsState {
   reports: FinancialReport[];
   isLoading: boolean;
   isGenerating: boolean;
   error: string | null;
+  info: string | null;
   fetchReports: (type?: ReportType) => Promise<void>;
   generateReport: (type: ReportType) => Promise<void>;
   deleteReport: (id: string) => Promise<void>;
 }
 
-export const useReportsStore = create<ReportsState>((set) => ({
+export const useReportsStore = create<ReportsState>((set, get) => ({
   reports: [],
   isLoading: false,
   isGenerating: false,
   error: null,
+  info: null,
 
   fetchReports: async (type?: ReportType) => {
     set({ isLoading: true, error: null });
@@ -34,14 +36,18 @@ export const useReportsStore = create<ReportsState>((set) => ({
   },
 
   generateReport: async (type: ReportType) => {
-    set({ isGenerating: true, error: null });
+    set({ isGenerating: true, error: null, info: null });
     try {
-      const res = await apiPost<unknown>('/api/reports/generate', { type });
+      const res = await apiPost<GenerateReportResult>('/api/reports/generate', { type });
       if (!res.success) {
         set({ error: res.message ?? 'Error al generar reporte', isGenerating: false });
         return;
       }
-      set({ isGenerating: false });
+      set({
+        isGenerating: false,
+        info: res.data?.created === false ? (res.message ?? 'Ya existe un reporte para este período') : null,
+      });
+      await get().fetchReports();
     } catch {
       set({ error: 'Error de conexión', isGenerating: false });
     }
