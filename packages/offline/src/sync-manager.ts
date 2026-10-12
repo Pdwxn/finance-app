@@ -145,11 +145,28 @@ async function processQueue(): Promise<void> {
   }
 }
 
+/**
+ * El sync hasta ahora dependía solo de este setInterval de 30s. En un
+ * celular eso no basta: el navegador/iOS suspende timers en segundo plano
+ * en cuanto la app deja de estar en primer plano, así que si el usuario
+ * carga un gasto y minimiza la app, el intervalo puede no volver a correr
+ * nunca. Disparamos también al reconectar y al volver a foreground, que es
+ * exactamente el momento en que sí hay chance real de red + CPU.
+ */
 export function startSync(): void {
   if (intervalId) return;
 
   processQueue();
   intervalId = setInterval(processQueue, SYNC_INTERVAL_MS);
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('online', () => { processQueue(); });
+  }
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') processQueue();
+    });
+  }
 }
 
 export function stopSync(): void {

@@ -113,7 +113,7 @@ async function getUserCurrency(userId: string): Promise<string> {
 
 async function getTotalIncome(userId: string, startDate: string, endDate: string): Promise<number> {
   const result = await db
-    .select({ total: sql<number>`COALESCE(SUM(${incomes.amount}), 0)` })
+    .select({ total: sql<string>`COALESCE(SUM(${incomes.amount}), 0)` })
     .from(incomes)
     .where(and(
       eq(incomes.userId, userId),
@@ -121,12 +121,12 @@ async function getTotalIncome(userId: string, startDate: string, endDate: string
       lte(incomes.transactionDate, endDate),
       isNull(incomes.deletedAt),
     ));
-  return result[0]?.total ?? 0;
+  return Number(result[0]?.total ?? 0);
 }
 
 async function getTotalExpenses(userId: string, startDate: string, endDate: string): Promise<number> {
   const expenseTotal = db
-    .select({ total: sql<number>`COALESCE(SUM(${expenses.amount}), 0)` })
+    .select({ total: sql<string>`COALESCE(SUM(${expenses.amount}), 0)` })
     .from(expenses)
     .where(and(
       eq(expenses.userId, userId),
@@ -136,7 +136,7 @@ async function getTotalExpenses(userId: string, startDate: string, endDate: stri
     ));
 
   const chargesTotal = db
-    .select({ total: sql<number>`COALESCE(SUM(${cardCharges.amount}), 0)` })
+    .select({ total: sql<string>`COALESCE(SUM(${cardCharges.amount}), 0)` })
     .from(cardCharges)
     .innerJoin(accounts, eq(accounts.id, cardCharges.creditCardId))
     .where(and(
@@ -148,7 +148,11 @@ async function getTotalExpenses(userId: string, startDate: string, endDate: stri
     ));
 
   const [expenseResult, chargesResult] = await Promise.all([expenseTotal, chargesTotal]);
-  return (expenseResult[0]?.total ?? 0) + (chargesResult[0]?.total ?? 0);
+  // OJO: postgres.js devuelve el SUM() de una columna bigint como STRING (para
+  // no perder precisión). Con `+` entre dos strings, JS concatena en vez de
+  // sumar ("2000000" + "0" = "20000000", 10x el valor real) — por eso había
+  // que convertir a Number explícitamente antes de sumar.
+  return Number(expenseResult[0]?.total ?? 0) + Number(chargesResult[0]?.total ?? 0);
 }
 
 async function getIncomeByCategory(
@@ -160,7 +164,7 @@ async function getIncomeByCategory(
     .select({
       categoryId: incomes.categoryId,
       name: categories.name,
-      amount: sql<number>`COALESCE(SUM(${incomes.amount}), 0)`,
+      amount: sql<string>`COALESCE(SUM(${incomes.amount}), 0)`,
     })
     .from(incomes)
     .innerJoin(categories, eq(incomes.categoryId, categories.id))
@@ -173,7 +177,7 @@ async function getIncomeByCategory(
     ))
     .groupBy(incomes.categoryId, categories.name);
 
-  return result.map(r => ({ ...r, percentage: 0 }));
+  return result.map(r => ({ ...r, amount: Number(r.amount), percentage: 0 }));
 }
 
 async function getExpenseByCategory(
@@ -185,7 +189,7 @@ async function getExpenseByCategory(
     .select({
       categoryId: expenses.categoryId,
       name: categories.name,
-      amount: sql<number>`COALESCE(SUM(${expenses.amount}), 0)`,
+      amount: sql<string>`COALESCE(SUM(${expenses.amount}), 0)`,
     })
     .from(expenses)
     .innerJoin(categories, eq(expenses.categoryId, categories.id))
@@ -202,7 +206,7 @@ async function getExpenseByCategory(
     .select({
       categoryId: cardCharges.categoryId,
       name: categories.name,
-      amount: sql<number>`COALESCE(SUM(${cardCharges.amount}), 0)`,
+      amount: sql<string>`COALESCE(SUM(${cardCharges.amount}), 0)`,
     })
     .from(cardCharges)
     .innerJoin(categories, eq(cardCharges.categoryId, categories.id))
@@ -219,14 +223,14 @@ async function getExpenseByCategory(
 
   const merged = new Map<string, CategorySummary>();
   for (const item of expenseResult) {
-    merged.set(item.categoryId, { ...item, percentage: 0 });
+    merged.set(item.categoryId, { ...item, amount: Number(item.amount), percentage: 0 });
   }
   for (const item of chargesResult) {
     const existing = merged.get(item.categoryId);
     if (existing) {
-      existing.amount += item.amount;
+      existing.amount += Number(item.amount);
     } else {
-      merged.set(item.categoryId, { ...item, percentage: 0 });
+      merged.set(item.categoryId, { ...item, amount: Number(item.amount), percentage: 0 });
     }
   }
 
