@@ -12,6 +12,7 @@ export {
   enqueue,
   getPending,
   markSyncing,
+  markPending,
   markCompleted,
   markFailed,
   removeCompleted,

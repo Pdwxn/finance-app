@@ -22,15 +22,26 @@ export async function enqueue(
   });
 }
 
+/**
+ * Trae los items a sincronizar. Incluye 'failed' junto con 'pending': no hay
+ * backoff ni límite de reintentos en este sync manager (por diseño, sigue el
+ * mismo principio simple de LWW de CLAUDE.md), así que un item marcado como
+ * 'failed' por una falla transitoria (red, token expirado) debe reintentarse
+ * en el siguiente ciclo en vez de quedar perdido para siempre.
+ */
 export async function getPending(): Promise<SyncQueueItem[]> {
   return db.syncQueue
     .where('status')
-    .equals('pending')
+    .anyOf(['pending', 'failed'])
     .toArray();
 }
 
 export async function markSyncing(id: string): Promise<void> {
   await db.syncQueue.update(id, { status: 'syncing', updatedAt: new Date() });
+}
+
+export async function markPending(id: string): Promise<void> {
+  await db.syncQueue.update(id, { status: 'pending', updatedAt: new Date() });
 }
 
 export async function markCompleted(id: string): Promise<void> {
