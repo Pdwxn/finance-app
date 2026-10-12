@@ -1,4 +1,4 @@
-import Dexie, { type EntityTable } from 'dexie';
+import Dexie, { type EntityTable, type Table } from 'dexie';
 
 interface Account {
   id: string;
@@ -289,3 +289,66 @@ class FinanceDB extends Dexie {
 }
 
 export const db = new FinanceDB();
+
+/**
+ * Las entidades concretas (Expense, Income, etc.) no tienen índice de tipo
+ * string, así que no son estructuralmente asignables a una tabla genérica.
+ * Este cast es el mismo escape "dinámico por entidad" que ya usa el backend
+ * en sync.service.ts (`table as never`) — no introduce `any`.
+ */
+function asDynamicTable<T extends { id: string }>(table: EntityTable<T, 'id'>): Table<Record<string, unknown>, string> {
+  return table as unknown as Table<Record<string, unknown>, string>;
+}
+
+/**
+ * Tablas que participan del sync con el backend (mismas claves que el mapa
+ * `tables` de apps/api/src/modules/sync/sync.service.ts). Se usa para poder
+ * escribir localmente el registro autoritativo que manda el servidor cuando
+ * un conflicto de LWW se resuelve a favor del servidor.
+ */
+const syncableTables: Record<string, Table<Record<string, unknown>, string>> = {
+  accounts: asDynamicTable(db.accounts),
+  categories: asDynamicTable(db.categories),
+  expenses: asDynamicTable(db.expenses),
+  incomes: asDynamicTable(db.incomes),
+  transfers: asDynamicTable(db.transfers),
+  creditCards: asDynamicTable(db.creditCards),
+  cardCharges: asDynamicTable(db.cardCharges),
+  cardChargeInstallments: asDynamicTable(db.cardChargeInstallments),
+  cardPayments: asDynamicTable(db.cardPayments),
+  debts: asDynamicTable(db.debts),
+  debtPayments: asDynamicTable(db.debtPayments),
+  goals: asDynamicTable(db.goals),
+  goalContributions: asDynamicTable(db.goalContributions),
+  investments: asDynamicTable(db.investments),
+  investmentTransactions: asDynamicTable(db.investmentTransactions),
+  budgets: asDynamicTable(db.budgets),
+};
+
+const DATE_FIELDS = ['createdAt', 'updatedAt', 'deletedAt'] as const;
+
+/** El JSON del servidor trae las fechas como string ISO; Dexie las espera como Date. */
+function normalizeServerRecord(record: Record<string, unknown>): Record<string, unknown> {
+  const normalized: Record<string, unknown> = { ...record };
+  for (const field of DATE_FIELDS) {
+    const value = normalized[field];
+    if (typeof value === 'string') {
+      normalized[field] = new Date(value);
+    }
+  }
+  return normalized;
+}
+
+/**
+ * Sobrescribe el registro local con el dato autoritativo del servidor
+ * (ganador de LWW). Usado cuando /api/sync devuelve status 'conflicted'.
+ */
+export async function applyServerRecord(
+  entity: string,
+  id: string,
+  record: Record<string, unknown>
+): Promise<void> {
+  const table = syncableTables[entity];
+  if (!table) return;
+  await table.put({ ...normalizeServerRecord(record), id });
+}

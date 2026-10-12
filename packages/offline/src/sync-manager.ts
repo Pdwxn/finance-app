@@ -1,7 +1,17 @@
 import { getPending, markSyncing, markPending, markCompleted, markFailed } from './sync-queue';
+import { applyServerRecord } from './db';
+import { resolveConflict } from './conflict-resolver';
 import { statusStore } from './status-store';
 
 const SYNC_INTERVAL_MS = 30_000;
+
+interface SyncOpResult {
+  queueId: string;
+  status: 'applied' | 'conflicted' | 'error';
+  entityId: string;
+  serverData?: Record<string, unknown>;
+  error?: string;
+}
 
 let intervalId: ReturnType<typeof setInterval> | null = null;
 
@@ -93,15 +103,35 @@ async function processQueue(): Promise<void> {
       return;
     }
 
-    const result = await response.json() as { data: { results: Array<{ queueId: string; status: string }> } };
+    const result = await response.json() as { data: { results: SyncOpResult[] } };
     const results = result.data.results;
+    const byQueueId = new Map(pending.map(item => [item.id, item]));
 
     for (const r of results) {
       if (r.status === 'applied') {
         await markCompleted(r.queueId);
-      } else {
-        await markFailed(r.queueId);
+        continue;
       }
+
+      if (r.status === 'conflicted' && r.serverData) {
+        // LWW: el servidor (fuente de verdad, CLAUDE.md §5/§8) ya decidió que
+        // su versión gana. Reflejamos ese dato localmente para que la UI deje
+        // de mostrar el valor local obsoleto, en vez de reintentar para
+        // siempre el mismo payload perdedor.
+        const item = byQueueId.get(r.queueId);
+        if (item) {
+          const localUpdatedAt = (item.payload as Record<string, unknown>).updatedAt as string | undefined;
+          const serverUpdatedAt = r.serverData.updatedAt as string | undefined;
+          if (localUpdatedAt && serverUpdatedAt && resolveConflict(localUpdatedAt, serverUpdatedAt) === 'local_wins') {
+            console.warn(`[sync] Conflicto en ${item.entity}/${item.entityId}: el cliente lo marcó como local_wins pero el servidor ya resolvió a favor de su propia versión; se adopta la versión del servidor.`);
+          }
+          await applyServerRecord(item.entity, item.entityId, r.serverData);
+        }
+        await markCompleted(r.queueId);
+        continue;
+      }
+
+      await markFailed(r.queueId);
     }
   } catch {
     const pendingItems = await getPending();

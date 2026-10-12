@@ -1,4 +1,4 @@
-export { db } from './db';
+export { db, applyServerRecord } from './db';
 export type {
   Account, Category, Expense, Income, Transfer,
   CreditCard, CardCharge, CardPayment, Debt, DebtPayment,
