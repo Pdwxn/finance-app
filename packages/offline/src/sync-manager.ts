@@ -71,6 +71,10 @@ async function processQueue(): Promise<void> {
       entity: item.entity,
       entityId: item.entityId,
       payload: item.payload as Record<string, unknown>,
+      // sync.schema.ts (backend) exige este campo; faltaba acá y provocaba
+      // que CADA sync devolviera 400 (createdAt requerido), sin importar
+      // los demás fixes — por eso nunca llegó nada a Postgres hasta ahora.
+      createdAt: item.createdAt.toISOString(),
     }));
 
     let token = localStorage.getItem('jwt');

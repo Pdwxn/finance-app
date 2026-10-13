@@ -80,6 +80,12 @@ export async function processOperations(
       const incomingUpdatedAt = op.payload.updatedAt
         ? new Date(op.payload.updatedAt as string)
         : new Date(0);
+      // El cliente manda updatedAt como string ISO (JSON no tiene tipo Date).
+      // Drizzle espera un Date real para columnas timestamp; si le pasamos el
+      // string tal cual revienta con "value.toISOString is not a function".
+      // Por eso siempre insertamos/actualizamos con esta versión normalizada,
+      // nunca con op.payload crudo.
+      const normalizedPayload = { ...op.payload, updatedAt: incomingUpdatedAt };
 
       const existing = await findById(table, op.entityId);
       const existingRecord = existing[0] ?? null;
@@ -88,13 +94,13 @@ export async function processOperations(
         case 'create': {
           if (existingRecord) {
             if (incomingUpdatedAt > (existingRecord.updatedAt as Date)) {
-              await updateRow(table, op.entityId, { ...op.payload, updatedAt: incomingUpdatedAt });
+              await updateRow(table, op.entityId, normalizedPayload);
               results.push({ queueId: op.id, status: 'applied', entityId: op.entityId });
             } else {
               results.push({ queueId: op.id, status: 'conflicted', entityId: op.entityId, serverData: existingRecord });
             }
           } else {
-            await insertRow(table, { ...op.payload, id: op.entityId, userId });
+            await insertRow(table, { ...normalizedPayload, id: op.entityId, userId });
             results.push({ queueId: op.id, status: 'applied', entityId: op.entityId });
           }
           break;
@@ -102,11 +108,11 @@ export async function processOperations(
 
         case 'update': {
           if (!existingRecord) {
-            await insertRow(table, { ...op.payload, id: op.entityId, userId });
+            await insertRow(table, { ...normalizedPayload, id: op.entityId, userId });
             results.push({ queueId: op.id, status: 'applied', entityId: op.entityId });
           } else {
             if (incomingUpdatedAt >= (existingRecord.updatedAt as Date)) {
-              await updateRow(table, op.entityId, { ...op.payload, updatedAt: incomingUpdatedAt });
+              await updateRow(table, op.entityId, normalizedPayload);
               results.push({ queueId: op.id, status: 'applied', entityId: op.entityId });
             } else {
               results.push({ queueId: op.id, status: 'conflicted', entityId: op.entityId, serverData: existingRecord });
