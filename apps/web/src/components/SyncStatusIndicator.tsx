@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 export function SyncStatusIndicator() {
   const [status, setStatus] = useState<'online' | 'offline' | 'syncing'>('online');
   const prevStatus = useRef(status);
+  const lastError = useRef<string | null>(null);
 
   useEffect(() => {
     const unsub = statusStore.subscribe(s => {
@@ -20,6 +21,17 @@ export function SyncStatusIndicator() {
     setStatus(statusStore.status);
     prevStatus.current = statusStore.status;
     return unsub;
+  }, []);
+
+  useEffect(() => {
+    // Sin DevTools en el celular, este es el único lugar donde se puede ver
+    // por qué una operación de sync falló de verdad (status 'error').
+    // Evita repetir el mismo toast si el mismo item sigue fallando cada ciclo.
+    return statusStore.subscribeToErrors(message => {
+      if (lastError.current === message) return;
+      lastError.current = message;
+      toast.error(`Error de sincronización: ${message}`, { duration: 15000 });
+    });
   }, []);
 
   if (status === 'online') return null;

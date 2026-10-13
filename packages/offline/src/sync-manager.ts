@@ -136,6 +136,10 @@ async function processQueue(): Promise<void> {
       }
 
       await markFailed(r.queueId);
+      if (r.status === 'error') {
+        const item = byQueueId.get(r.queueId);
+        statusStore.reportSyncError(`${item?.entity ?? 'desconocido'}: ${r.error ?? 'error desconocido'}`);
+      }
     }
   } catch {
     const pendingItems = await getPending();
