@@ -36,11 +36,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <PwaRegister />
       <TopBar />
       <SyncStatusIndicator />
-      <main className={`${isOffline ? 'pt-[calc(5.5rem+env(safe-area-inset-top))]' : 'pt-[calc(4rem+env(safe-area-inset-top))]'} pb-[calc(4.5rem+env(safe-area-inset-bottom))] min-h-screen`}>{children}</main>
+      <main className={`${isOffline ? 'pt-[calc(5rem+env(safe-area-inset-top))]' : 'pt-[calc(3.5rem+env(safe-area-inset-top))]'} pb-[calc(4.5rem+env(safe-area-inset-bottom))] min-h-screen`}>{children}</main>
       <BottomNav />
       <Toaster
         position="top-center"
-        style={{ marginTop: 'calc(4rem + env(safe-area-inset-top))' }}
+        style={{ marginTop: 'calc(3.5rem + env(safe-area-inset-top))' }}
         toastOptions={{
           style: {
             background: 'var(--color-surface)',
