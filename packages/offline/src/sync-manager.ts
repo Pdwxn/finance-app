@@ -94,12 +94,22 @@ async function processQueue(): Promise<void> {
       if (refreshed) {
         token = localStorage.getItem('jwt')!;
         response = await postSync(operations, token);
+      } else {
+        // El refresh token también venció (dura 30 días, ver auth.service.ts)
+        // o es inválido. No hay forma automática de recuperar la sesión acá
+        // — sin esto, el usuario nunca se entera de que el sync está muerto.
+        statusStore.reportSyncError(
+          'Tu sesión expiró. Cierra sesión y vuelve a entrar para que la sincronización pueda seguir.'
+        );
       }
     }
 
     if (!response.ok) {
       // Falla de transporte/autenticación: no es un error de negocio del
       // item, así que se reintenta en el próximo ciclo en vez de perderse.
+      if (response.status !== 401) {
+        statusStore.reportSyncError(`No se pudo sincronizar (HTTP ${response.status}). Reintentando...`);
+      }
       for (const op of pending) {
         await markPending(op.id);
       }
@@ -141,7 +151,10 @@ async function processQueue(): Promise<void> {
         statusStore.reportSyncError(`${item?.entity ?? 'desconocido'}: ${r.error ?? 'error desconocido'}`);
       }
     }
-  } catch {
+  } catch (error) {
+    statusStore.reportSyncError(
+      `Error de red al sincronizar: ${error instanceof Error ? error.message : 'desconocido'}`
+    );
     const pendingItems = await getPending();
     for (const item of pendingItems) {
       if (item.status === 'syncing') {
