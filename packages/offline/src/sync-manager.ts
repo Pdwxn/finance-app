@@ -1,9 +1,18 @@
 import { getPending, markSyncing, markPending, markCompleted, markFailed } from './sync-queue';
+import type { SyncQueueItem } from './db';
 import { applyServerRecord } from './db';
 import { resolveConflict } from './conflict-resolver';
 import { statusStore } from './status-store';
 
 const SYNC_INTERVAL_MS = 30_000;
+
+/**
+ * Un dispositivo con meses de backlog puede acumular cientos de items. Un
+ * solo request con todos juntos puede superar límites de tamaño de body
+ * (nos pasó: 413 Payload Too Large) además de ser más lento y más frágil
+ * (si falla, se pierde/reintenta todo el lote entero). Se manda en tandas.
+ */
+const BATCH_SIZE = 50;
 
 interface SyncOpResult {
   queueId: string;
@@ -63,7 +72,19 @@ async function processQueue(): Promise<void> {
   if (pending.length === 0) return;
 
   statusStore.setSyncing(true);
+  try {
+    for (let i = 0; i < pending.length; i += BATCH_SIZE) {
+      const batch = pending.slice(i, i + BATCH_SIZE);
+      const stop = await processBatch(batch);
+      if (stop) break;
+    }
+  } finally {
+    statusStore.setSyncing(false);
+  }
+}
 
+/** Devuelve true si no vale la pena seguir mandando las siguientes tandas en este ciclo (falla de transporte/auth, no de negocio). */
+async function processBatch(pending: SyncQueueItem[]): Promise<boolean> {
   try {
     const operations = pending.map(item => ({
       id: item.id,
@@ -79,8 +100,7 @@ async function processQueue(): Promise<void> {
 
     let token = localStorage.getItem('jwt');
     if (!token) {
-      statusStore.setSyncing(false);
-      return;
+      return true;
     }
 
     for (const op of pending) {
@@ -107,14 +127,14 @@ async function processQueue(): Promise<void> {
     if (!response.ok) {
       // Falla de transporte/autenticación: no es un error de negocio del
       // item, así que se reintenta en el próximo ciclo en vez de perderse.
+      // No tiene sentido mandar las tandas que faltan en este mismo ciclo.
       if (response.status !== 401) {
         statusStore.reportSyncError(`No se pudo sincronizar (HTTP ${response.status}). Reintentando...`);
       }
       for (const op of pending) {
         await markPending(op.id);
       }
-      statusStore.setSyncing(false);
-      return;
+      return true;
     }
 
     const result = await response.json() as { data: { results: SyncOpResult[] } };
@@ -151,18 +171,19 @@ async function processQueue(): Promise<void> {
         statusStore.reportSyncError(`${item?.entity ?? 'desconocido'}: ${r.error ?? 'error desconocido'}`);
       }
     }
+
+    return false;
   } catch (error) {
     statusStore.reportSyncError(
       `Error de red al sincronizar: ${error instanceof Error ? error.message : 'desconocido'}`
     );
-    const pendingItems = await getPending();
-    for (const item of pendingItems) {
-      if (item.status === 'syncing') {
-        await markPending(item.id);
-      }
+    // No usamos getPending() acá: recién se marcaron 'syncing' hace instantes,
+    // así que el filtro de "atascado hace >60s" los excluiría y quedarían
+    // sin revertir. Se revierte directo esta misma tanda.
+    for (const op of pending) {
+      await markPending(op.id);
     }
-  } finally {
-    statusStore.setSyncing(false);
+    return true;
   }
 }
 

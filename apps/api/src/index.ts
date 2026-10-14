@@ -25,7 +25,10 @@ import './services/scheduler';
 const app = express();
 
 app.use(cors({ origin: env.CORS_ORIGIN }));
-app.use(express.json());
+// Default de express.json() es 100kb — un dispositivo con meses de backlog
+// de sync (cientos de operaciones encoladas) lo supera fácil y el servidor
+// responde 413 antes de siquiera llegar al router.
+app.use(express.json({ limit: '5mb' }));
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
