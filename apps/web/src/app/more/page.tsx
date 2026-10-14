@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
-import { DocumentTextIcon, CreditCardIcon, ExclamationTriangleIcon, BoltIcon, ArrowTrendingUpIcon, CurrencyDollarIcon, TagIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import { useAuthStore } from '@/store/auth';
+import { DocumentTextIcon, CreditCardIcon, ExclamationTriangleIcon, BoltIcon, ArrowTrendingUpIcon, CurrencyDollarIcon, TagIcon, SparklesIcon, ArrowRightStartOnRectangleIcon } from '@heroicons/react/24/outline';
 
 const sections = [
   { label: 'Resúmenes IA', href: '/reports/ai', icon: SparklesIcon },
@@ -16,6 +17,13 @@ const sections = [
 ];
 
 export default function MorePage() {
+  const logout = useAuthStore(s => s.logout);
+
+  function handleLogout() {
+    if (!confirm('¿Cerrar sesión?')) return;
+    logout();
+  }
+
   return (
     <ProtectedRoute>
       <div className="p-4">
@@ -36,6 +44,15 @@ export default function MorePage() {
               </svg>
             </Link>
           ))}
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 rounded-xl bg-[var(--color-surface)] p-4 border border-[var(--color-border)] hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors mt-3"
+          >
+            <div className="flex items-center justify-center w-9 h-9 rounded-full bg-rose-50 dark:bg-rose-950/20">
+              <ArrowRightStartOnRectangleIcon className="w-[18px] h-[18px] text-rose-500" />
+            </div>
+            <span className="text-sm font-medium text-rose-500">Cerrar sesión</span>
+          </button>
         </div>
       </div>
     </ProtectedRoute>
