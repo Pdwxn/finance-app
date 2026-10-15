@@ -77,15 +77,26 @@ export async function processOperations(
         continue;
       }
 
+      // Varios stores (budgets, cardPayments, creditCards, debts,
+      // goalContributions, goals, investments, investmentTransactions,
+      // debtPayments) nunca mandan updatedAt en el payload. Usar epoch (0)
+      // ahí hacía que el registro quedara con fecha 1970 para siempre y, peor,
+      // que CUALQUIER conflicto futuro lo tratara como el perdedor automático
+      // (nada puede ser "más viejo" que epoch). "Ahora" es el default sensato.
       const incomingUpdatedAt = op.payload.updatedAt
         ? new Date(op.payload.updatedAt as string)
-        : new Date(0);
-      // El cliente manda updatedAt como string ISO (JSON no tiene tipo Date).
-      // Drizzle espera un Date real para columnas timestamp; si le pasamos el
-      // string tal cual revienta con "value.toISOString is not a function".
-      // Por eso siempre insertamos/actualizamos con esta versión normalizada,
-      // nunca con op.payload crudo.
-      const normalizedPayload = { ...op.payload, updatedAt: incomingUpdatedAt };
+        : new Date();
+      // El cliente manda las fechas como string ISO (JSON no tiene tipo Date,
+      // y algunos payloads como el de cardCharges arrastran un createdAt que
+      // nunca se tocó). Drizzle espera un Date real para columnas timestamp;
+      // si le pasamos el string tal cual revienta con
+      // "value.toISOString is not a function". Por eso siempre
+      // insertamos/actualizamos con esta versión normalizada, nunca con
+      // op.payload crudo.
+      const normalizedPayload: Record<string, unknown> = { ...op.payload, updatedAt: incomingUpdatedAt };
+      if (typeof normalizedPayload.createdAt === 'string') {
+        normalizedPayload.createdAt = new Date(normalizedPayload.createdAt);
+      }
 
       const existing = await findById(table, op.entityId);
       const existingRecord = existing[0] ?? null;
